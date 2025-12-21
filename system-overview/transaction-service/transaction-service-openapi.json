@@ -1,0 +1,1634 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "transaction-service",
+    "description": "",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/v1/users/{user_id}/budgets": {
+      "get": {
+        "tags": [
+          "budget"
+        ],
+        "operationId": "get_budgets_handler",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of budgets with categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BudgetResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "budget"
+        ],
+        "operationId": "create_budget_handler",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBudgetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Budget created with categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid period type or data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}/budgets/summary": {
+      "get": {
+        "tags": [
+          "budget"
+        ],
+        "operationId": "get_budget_summary_handler",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "period_start",
+            "in": "query",
+            "description": "Period start date (ISO 8601)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "period_end",
+            "in": "query",
+            "description": "Period end date (ISO 8601)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Budget summary with category breakdowns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BudgetSummaryResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid date format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}/budgets/{budget_id}": {
+      "get": {
+        "tags": [
+          "budget"
+        ],
+        "operationId": "get_budget_handler",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "budget_id",
+            "in": "path",
+            "description": "Budget ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Budget with categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Budget not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "budget"
+        ],
+        "operationId": "delete_budget_handler",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "budget_id",
+            "in": "path",
+            "description": "Budget ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Budget deleted"
+          },
+          "404": {
+            "description": "Budget not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}/budgets/{budget_id}/categories": {
+      "put": {
+        "tags": [
+          "budget"
+        ],
+        "operationId": "update_category_allocations_handler",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "budget_id",
+            "in": "path",
+            "description": "Budget ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryAllocationsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Category allocations updated"
+          },
+          "400": {
+            "description": "Bad request - invalid allocations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Budget not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}/categories": {
+      "get": {
+        "tags": [
+          "transaction_category"
+        ],
+        "operationId": "list_categories",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListTransactionCategoriesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "transaction_category"
+        ],
+        "operationId": "create_category",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransactionCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionCategoryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/v1/users/{user_id}/categories/{id}": {
+      "get": {
+        "tags": [
+          "transaction_category"
+        ],
+        "operationId": "get_category",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionCategoryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "transaction_category"
+        ],
+        "operationId": "delete_category",
+        "responses": {
+          "200": {
+            "description": "Category deleted successfully"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/v1/users/{user_id}/transactions": {
+      "get": {
+        "tags": [
+          "transaction"
+        ],
+        "operationId": "get_transactions",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListTransactionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "transaction"
+        ],
+        "operationId": "create_transaction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransactionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/v1/users/{user_id}/transactions/import/confirm": {
+      "post": {
+        "tags": [
+          "transaction"
+        ],
+        "operationId": "confirm_csv_import",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResultResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/v1/users/{user_id}/transactions/import/preview": {
+      "post": {
+        "tags": [
+          "transaction"
+        ],
+        "operationId": "preview_csv_import",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CsvImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/v1/users/{user_id}/transactions/{id}": {
+      "get": {
+        "tags": [
+          "transaction"
+        ],
+        "operationId": "get_transaction",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "transaction"
+        ],
+        "operationId": "delete_transaction",
+        "responses": {
+          "200": {
+            "description": "Transaction deleted successfully"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiErrorResponse": {
+        "type": "object",
+        "required": [
+          "code",
+          "description"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "BudgetResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "name",
+          "amount",
+          "period_type",
+          "period_start_date",
+          "period_end_date",
+          "categories",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryAllocationResponse"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "example": "2024-06-01T12:00:00Z"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "period_end_date": {
+            "type": "string",
+            "example": "2024-06-30T23:59:59Z"
+          },
+          "period_start_date": {
+            "type": "string",
+            "example": "2024-06-01T12:00:00Z"
+          },
+          "period_type": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "example": "2024-06-01T12:00:00Z"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "BudgetSummaryResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "budget",
+          "spent",
+          "percent_used",
+          "warning",
+          "categories_breakdown"
+        ],
+        "properties": {
+          "budget": {
+            "type": "string"
+          },
+          "categories_breakdown": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryBreakdownResponse"
+            }
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "percent_used": {
+            "type": "string"
+          },
+          "spent": {
+            "type": "string"
+          },
+          "warning": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CategoryAllocationRequest": {
+        "type": "object",
+        "required": [
+          "category_id"
+        ],
+        "properties": {
+          "allocated_amount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "category_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "CategoryAllocationResponse": {
+        "type": "object",
+        "required": [
+          "category_id",
+          "category_name"
+        ],
+        "properties": {
+          "allocated_amount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "category_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category_name": {
+            "type": "string"
+          }
+        }
+      },
+      "CategoryBreakdownResponse": {
+        "type": "object",
+        "required": [
+          "category_id",
+          "category_name",
+          "spent",
+          "percent_used",
+          "warning"
+        ],
+        "properties": {
+          "allocated_amount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "category_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category_name": {
+            "type": "string"
+          },
+          "percent_used": {
+            "type": "string"
+          },
+          "remaining": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "spent": {
+            "type": "string"
+          },
+          "warning": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ConfirmImportRequest": {
+        "type": "object",
+        "required": [
+          "transactions"
+        ],
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CsvTransactionPreview"
+            }
+          }
+        }
+      },
+      "CreateBudgetRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "amount",
+          "period_type",
+          "period_start_date",
+          "period_end_date",
+          "category_allocations"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "category_allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryAllocationRequest"
+            }
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "period_end_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "period_start_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "period_type": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateTransactionCategoryRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateTransactionRequest": {
+        "type": "object",
+        "required": [
+          "description",
+          "amount",
+          "transactionCategoryId",
+          "frequencyType"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "frequencyType": {
+            "type": "string"
+          },
+          "paymentDay": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "timesLeft": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "transactionCategoryId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "CreateTransactionResponse": {
+        "type": "object",
+        "required": [
+          "transactionId",
+          "description"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
+          }
+        }
+      },
+      "CsvImportRequest": {
+        "type": "object",
+        "required": [
+          "csv_data"
+        ],
+        "properties": {
+          "csv_data": {
+            "type": "string"
+          }
+        }
+      },
+      "CsvTransactionPreview": {
+        "type": "object",
+        "required": [
+          "rowIndex",
+          "date",
+          "merchant",
+          "description",
+          "amount",
+          "currency",
+          "isNewCategory"
+        ],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "confidenceScore": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isNewCategory": {
+            "type": "boolean"
+          },
+          "merchant": {
+            "type": "string"
+          },
+          "rowIndex": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "suggestedCategory": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "GetTransactionResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "description",
+          "amount",
+          "date",
+          "transactionCategoryId",
+          "frequencyType"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "frequencyType": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "paymentDay": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "timesLeft": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "transactionCategoryId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        }
+      },
+      "ImportPreviewResponse": {
+        "type": "object",
+        "required": [
+          "transactions",
+          "suggestedCategories",
+          "detectedFormat"
+        ],
+        "properties": {
+          "detectedFormat": {
+            "type": "string"
+          },
+          "suggestedCategories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SuggestedCategory"
+            }
+          },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CsvTransactionPreview"
+            }
+          }
+        }
+      },
+      "ImportResultResponse": {
+        "type": "object",
+        "required": [
+          "importedCount",
+          "newCategoriesCount",
+          "transactions"
+        ],
+        "properties": {
+          "importedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "newCategoriesCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetTransactionResponse"
+            }
+          }
+        }
+      },
+      "JwtClaims": {
+        "type": "object",
+        "description": "JWT claims structure following OAuth 2.0 and JWT RFC standards",
+        "required": [
+          "sub",
+          "exp"
+        ],
+        "properties": {
+          "aud": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Audience - target service"
+          },
+          "client_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Client ID - service making the request"
+          },
+          "exp": {
+            "type": "integer",
+            "description": "Expiration time (Unix timestamp)",
+            "minimum": 0
+          },
+          "iat": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Issued at time (Unix timestamp)",
+            "minimum": 0
+          },
+          "iss": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Issuer - who created the token"
+          },
+          "jti": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "JWT ID - unique identifier for the token"
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Scope - permissions granted"
+          },
+          "session_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Session ID - for session management"
+          },
+          "sub": {
+            "type": "string",
+            "description": "Subject - always the end-user ID"
+          }
+        }
+      },
+      "ListTransactionCategoriesResponse": {
+        "type": "object",
+        "required": [
+          "categories"
+        ],
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionCategoryResponse"
+            }
+          }
+        }
+      },
+      "ListTransactionsResponse": {
+        "type": "object",
+        "required": [
+          "transactions"
+        ],
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetTransactionResponse"
+            }
+          }
+        }
+      },
+      "SuggestedCategory": {
+        "type": "object",
+        "required": [
+          "name",
+          "isNew"
+        ],
+        "properties": {
+          "isNew": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "SummaryQuery": {
+        "type": "object",
+        "required": [
+          "period_start",
+          "period_end"
+        ],
+        "properties": {
+          "period_end": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-06-30T23:59:59Z"
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-06-01T00:00:00Z"
+          }
+        }
+      },
+      "TransactionCategoryResponse": {
+        "type": "object",
+        "description": "Generic response for transaction categories to eliminate duplication",
+        "required": [
+          "categoryId",
+          "name"
+        ],
+        "properties": {
+          "categoryId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateCategoryAllocationsRequest": {
+        "type": "object",
+        "required": [
+          "category_allocations"
+        ],
+        "properties": {
+          "category_allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryAllocationRequest"
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "jwt": []
+    }
+  ]
+}
