@@ -30,6 +30,13 @@ jobs:
           token: ${{ secrets.REPOS_TOKEN }}
           path: monney-planner-bff
 
+      - name: Checkout User Service repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/user-service
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: user-service
+
       - name: Setup mdBook
         uses: peaceiris/actions-mdbook@v2
         with:
@@ -38,12 +45,18 @@ jobs:
       - name: Build BFF documentation
         run: mdbook build monney-planner-bff/docs
 
+      - name: Build User Service documentation
+        run: mdbook build user-service/docs
+
       - name: Combine documentation
         run: |
           mkdir -p _site
 
           # Copy BFF docs
           cp -r monney-planner-bff/docs/book _site/bff
+
+          # Copy User Service docs
+          cp -r user-service/docs/book _site/user-service
 
           # Copy landing page
           cp monney-planner-docs/index.html _site/
