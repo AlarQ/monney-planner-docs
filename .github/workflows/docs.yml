@@ -26,25 +26,29 @@ jobs:
       - name: Checkout BFF repo
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/money-planner-bff
-          path: money-planner-bff
+          repository: ${{ github.repository_owner }}/monney-planner-bff
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: monney-planner-bff
 
       - name: Checkout User Service repo
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/user-service
+          token: ${{ secrets.REPOS_TOKEN }}
           path: user-service
 
       - name: Checkout Transaction Service repo
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/transaction-service
+          token: ${{ secrets.REPOS_TOKEN }}
           path: transaction-service
 
       - name: Checkout Budget Service repo
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/budget-service
+          token: ${{ secrets.REPOS_TOKEN }}
           path: budget-service
 
       - name: Setup mdBook
@@ -54,7 +58,7 @@ jobs:
 
       - name: Build all documentation
         run: |
-          mdbook build money-planner-bff/docs
+          mdbook build monney-planner-bff/docs
           mdbook build user-service/spec/docs
           mdbook build transaction-service/spec/docs
           mdbook build budget-service/spec/docs
@@ -64,7 +68,7 @@ jobs:
           mkdir -p _site
 
           # Copy each book to its subdirectory
-          cp -r money-planner-bff/docs/book _site/bff
+          cp -r monney-planner-bff/docs/book _site/bff
           cp -r user-service/spec/docs/book _site/user-service
           cp -r transaction-service/spec/docs/book _site/transaction-service
           cp -r budget-service/spec/docs/book _site/budget-service
