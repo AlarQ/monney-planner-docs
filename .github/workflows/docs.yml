@@ -30,48 +30,20 @@ jobs:
           token: ${{ secrets.REPOS_TOKEN }}
           path: monney-planner-bff
 
-      - name: Checkout User Service repo
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository_owner }}/user-service
-          token: ${{ secrets.REPOS_TOKEN }}
-          path: user-service
-
-      - name: Checkout Transaction Service repo
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository_owner }}/transaction-service
-          token: ${{ secrets.REPOS_TOKEN }}
-          path: transaction-service
-
-      - name: Checkout Budget Service repo
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository_owner }}/budget-service
-          token: ${{ secrets.REPOS_TOKEN }}
-          path: budget-service
-
       - name: Setup mdBook
         uses: peaceiris/actions-mdbook@v2
         with:
-          mdbook-version: 'latest'
+          mdbook-version: '0.4.52'
 
-      - name: Build all documentation
-        run: |
-          mdbook build monney-planner-bff/docs
-          mdbook build user-service/spec/docs
-          mdbook build transaction-service/spec/docs
-          mdbook build budget-service/spec/docs
+      - name: Build BFF documentation
+        run: mdbook build monney-planner-bff/docs
 
       - name: Combine documentation
         run: |
           mkdir -p _site
 
-          # Copy each book to its subdirectory
+          # Copy BFF docs
           cp -r monney-planner-bff/docs/book _site/bff
-          cp -r user-service/spec/docs/book _site/user-service
-          cp -r transaction-service/spec/docs/book _site/transaction-service
-          cp -r budget-service/spec/docs/book _site/budget-service
 
           # Copy landing page
           cp monney-planner-docs/index.html _site/
