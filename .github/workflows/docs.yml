@@ -56,6 +56,21 @@ jobs:
         with:
           mdbook-version: 'latest'
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache mdbook-mermaid
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/mdbook-mermaid
+          key: ${{ runner.os }}-mdbook-mermaid
+
+      - name: Install mdbook-mermaid
+        run: |
+          if ! command -v mdbook-mermaid &> /dev/null; then
+            cargo install mdbook-mermaid
+          fi
+
       - name: Build all documentation
         run: |
           mdbook build monney-planner-bff/docs
