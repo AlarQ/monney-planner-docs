@@ -37,6 +37,13 @@ jobs:
           token: ${{ secrets.REPOS_TOKEN }}
           path: user-service
 
+      - name: Checkout Transaction Service repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/transaction-service
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: transaction-service
+
       - name: Setup mdBook
         uses: peaceiris/actions-mdbook@v2
         with:
@@ -48,6 +55,9 @@ jobs:
       - name: Build User Service documentation
         run: mdbook build user-service/docs
 
+      - name: Build Transaction Service documentation
+        run: mdbook build transaction-service/docs
+
       - name: Combine documentation
         run: |
           mkdir -p _site
@@ -57,6 +67,9 @@ jobs:
 
           # Copy User Service docs
           cp -r user-service/docs/book _site/user-service
+
+          # Copy Transaction Service docs
+          cp -r transaction-service/docs/book _site/transaction-service
 
           # Copy landing page
           cp monney-planner-docs/index.html _site/
