@@ -65,6 +65,10 @@ monney-planner-docs/
 
 ## Service Documentation
 
+### Frontend (MoneyPlannerFE)
+- React 18 + TypeScript + Material-UI
+- User interface and expense tracking
+
 ### Transaction Service
 - [feature-budget.md](system-overview/transaction-service/feature-budget.md)
 - [post-mvp-budget-features.md](system-overview/transaction-service/post-mvp-budget-features.md)

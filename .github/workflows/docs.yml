@@ -44,6 +44,13 @@ jobs:
           token: ${{ secrets.REPOS_TOKEN }}
           path: transaction-service
 
+      - name: Checkout MoneyPlannerFE repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/MoneyPlannerFE
+          token: ${{ secrets.REPOS_TOKEN }}
+          path: MoneyPlannerFE
+
       - name: Setup mdBook
         uses: peaceiris/actions-mdbook@v2
         with:
@@ -58,6 +65,9 @@ jobs:
       - name: Build Transaction Service documentation
         run: mdbook build transaction-service/docs
 
+      - name: Build MoneyPlannerFE documentation
+        run: mdbook build MoneyPlannerFE/docs
+
       - name: Combine documentation
         run: |
           mkdir -p _site
@@ -70,6 +80,9 @@ jobs:
 
           # Copy Transaction Service docs
           cp -r transaction-service/docs/book _site/transaction-service
+
+          # Copy MoneyPlannerFE docs
+          cp -r MoneyPlannerFE/docs/book _site/frontend
 
           # Copy landing page
           cp monney-planner-docs/index.html _site/
