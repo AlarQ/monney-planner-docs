@@ -121,7 +121,28 @@ The current CSV import system has significant usability issues:
 #### POST `/v1/users/{user_id}/transactions/import/analyze`
 Upload CSV and get AI-suggested column mapping with pre-parsed transactions.
 
-**Request**: Multipart form with CSV file
+**Request**: Multipart form with:
+- `file`: CSV file (required)
+- `mapping_override`: JSON string with user-specified mapping (optional)
+
+**Behavior**:
+- If `mapping_override` is NOT provided → Call AI for column mapping suggestions, parse with AI mapping
+- If `mapping_override` IS provided → Skip AI call, parse directly with provided mapping
+
+This allows users to re-analyze with corrected mapping without wasting an AI API call.
+
+**Example `mapping_override`** (when user corrects AI suggestion):
+```json
+{
+  "date_column": "Post Date",
+  "amount_column": "Amount",
+  "merchant_column": "Description",
+  "description_column": null,
+  "currency_column": null,
+  "date_format": "MM/DD/YYYY",
+  "amount_format": "standard"
+}
+```
 
 **Response**:
 ```json
@@ -703,6 +724,7 @@ Remove old routes:
 | **Ambiguous columns** | Multiple date/amount columns | AI explains choice in reasoning, user can override |
 | **AI service unavailable** | API timeout/error | Return error, show manual mapping UI only |
 | **Missing required fields** | AI returns null for date/amount | Return error with clear message |
+| **User overrides mapping** | User changes column selection in UI | Call `/analyze` with `mapping_override` parameter, skip AI, re-parse with user mapping |
 
 ### 4.3 Data Parsing Issues
 
@@ -824,6 +846,7 @@ Remove old routes:
   - [ ] Handle AI errors gracefully
 - [ ] Create API handlers
   - [ ] `analyze_csv_handler` - multipart upload, parse, AI call, return pre-parsed transactions
+    - [ ] Support optional `mapping_override` parameter to skip AI and use provided mapping
   - [ ] `confirm_import_handler` - JSON body with parsed transactions (no file upload), create transactions
 - [ ] Add OpenAPI documentation with `utoipa`
 - [ ] Delete old CSV format adapters

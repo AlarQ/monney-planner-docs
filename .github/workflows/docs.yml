@@ -84,8 +84,10 @@ jobs:
           # Copy MoneyPlannerFE docs
           cp -r MoneyPlannerFE/docs/book _site/frontend
 
-          # Copy landing page
+          # Copy landing page and PRDs
           cp monney-planner-docs/index.html _site/
+          cp monney-planner-docs/prds.html _site/
+          cp -r monney-planner-docs/system-overview _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
