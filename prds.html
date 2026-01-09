@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Requirements Documents - Money Planner</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --card-bg: #16213e;
+            --primary: #0f3460;
+            --accent: #e94560;
+            --text: #eaeaea;
+            --text-muted: #a0a0a0;
+            --sidebar-width: 300px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-color);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--card-bg);
+            border-right: 1px solid var(--primary);
+            height: 100vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 2rem 4rem;
+            max-width: 1000px;
+        }
+
+        .sidebar h1 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--accent), #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+
+        .nav-group {
+            margin-bottom: 2rem;
+        }
+
+        .nav-group-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .nav-link {
+            display: block;
+            color: var(--text);
+            text-decoration: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            margin-bottom: 0.25rem;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: var(--primary);
+            color: var(--accent);
+        }
+
+        .nav-link.active {
+            background: var(--primary);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .back-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            transition: opacity 0.2s;
+        }
+
+        .back-home:hover {
+            opacity: 0.8;
+        }
+
+        /* Markdown Styles */
+        .prd-content {
+            line-height: 1.6;
+            font-size: 1.05rem;
+        }
+
+        .prd-content h1 {
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--primary);
+            padding-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        .prd-content h2 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+            opacity: 0.9;
+        }
+
+        .prd-content h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .prd-content p, .prd-content ul, .prd-content ol {
+            margin-bottom: 1.25rem;
+        }
+
+        .prd-content ul, .prd-content ol {
+            padding-left: 1.5rem;
+        }
+
+        .prd-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .prd-content code {
+            background: var(--primary);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+
+        .prd-content pre {
+            background: #0a0a1a;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--primary);
+        }
+
+        .prd-content pre code {
+            background: transparent;
+            padding: 0;
+        }
+
+        .prd-content hr {
+            border: 0;
+            border-top: 1px solid var(--primary);
+            margin: 2.5rem 0;
+        }
+
+        .prd-content blockquote {
+            border-left: 4px solid var(--accent);
+            padding-left: 1rem;
+            margin-left: 0;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .prd-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+
+        .prd-content th, .prd-content td {
+            border: 1px solid var(--primary);
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        .prd-content th {
+            background: var(--primary);
+            color: var(--accent);
+        }
+
+        #loading {
+            display: none;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--primary);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="index.html" class="back-home">← Back to Hub</a>
+        <h1>Money Planner PRDs</h1>
+
+        <div class="nav-group">
+            <span class="nav-group-title">Implemented</span>
+            <a href="#" class="nav-link" data-path="system-overview/features/implemented/PRD-async-ai-categorization.md">Async AI Categorization</a>
+            <a href="#" class="nav-link" data-path="system-overview/features/implemented/PRD-generic-categories.md">Generic Categories</a>
+        </div>
+
+        <div class="nav-group">
+            <span class="nav-group-title">In Progress</span>
+            <a href="#" class="nav-link" data-path="system-overview/features/in-progress/PRD-budget-settlement.md">Budget Settlement</a>
+            <a href="#" class="nav-link" data-path="system-overview/features/in-progress/PRD-draft-budgets.md">Draft Budgets</a>
+        </div>
+
+        <div class="nav-group">
+            <span class="nav-group-title">To Implement</span>
+            <a href="#" class="nav-link" data-path="system-overview/features/to-implement/PRD-enhanced-categorisation.md">Enhanced Categorization</a>
+            <a href="#" class="nav-link" data-path="system-overview/features/to-implement/PRD-stripe-integration.md">Stripe Integration</a>
+            <a href="#" class="nav-link" data-path="system-overview/features/to-implement/PRD-sign-with-google.md">Google Sign-in</a>
+            <a href="#" class="nav-link" data-path="system-overview/features/to-implement/PRD-user-mailing-MVP.md">User Mailing MVP</a>
+            <a href="#" class="nav-link" data-path="system-overview/features/to-implement/PRD-opentelemtry.md">OpenTelemetry</a>
+            <a href="#" class="nav-link" data-path="system-overview/features/to-implement/PRD-backoffice-analysis.md">Backoffice Analysis</a>
+            <a href="#" class="nav-link" data-path="system-overview/features/to-implement/PRD-backoffice-application.md">Backoffice Application</a>
+            <a href="#" class="nav-link" data-path="system-overview/features/to-implement/prod-blockers.md">Production Blockers</a>
+        </div>
+
+        <div class="nav-group">
+            <span class="nav-group-title">General</span>
+            <a href="#" class="nav-link" data-path="system-overview/features/PRD-rules.md">Global Rules</a>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div id="loading">Loading document...</div>
+        <div id="content" class="prd-content">
+            <p style="color: var(--text-muted); text-align: center; margin-top: 5rem;">Select a PRD from the sidebar to view details.</p>
+        </div>
+    </main>
+
+    <script>
+        const contentDiv = document.getElementById('content');
+        const loadingDiv = document.getElementById('loading');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        async function loadPRD(path, linkElement) {
+            // Update active state
+            navLinks.forEach(l => l.classList.remove('active'));
+            if (linkElement) linkElement.classList.add('active');
+
+            loadingDiv.style.display = 'block';
+            contentDiv.style.opacity = '0.5';
+
+            try {
+                const response = await fetch(path);
+                if (!response.ok) throw new Error('Failed to load PRD');
+                const markdown = await response.text();
+                
+                // Set the rendered markdown
+                contentDiv.innerHTML = marked.parse(markdown);
+                
+                // Update URL hash without jumping
+                window.history.pushState(null, null, `#${path}`);
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (error) {
+                contentDiv.innerHTML = `<p style="color: var(--accent);">Error: ${error.message}</p>`;
+            } finally {
+                loadingDiv.style.display = 'none';
+                contentDiv.style.opacity = '1';
+            }
+        }
+
+        // Add click listeners
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const path = link.getAttribute('data-path');
+                loadPRD(path, link);
+            });
+        });
+
+        // Load from hash on startup
+        window.addEventListener('load', () => {
+            const hash = window.location.hash.slice(1);
+            if (hash) {
+                const link = document.querySelector(`.nav-link[data-path="${hash}"]`);
+                if (link) {
+                    loadPRD(hash, link);
+                }
+            }
+        });
+
+        // Handle browser back/forward
+        window.addEventListener('popstate', () => {
+            const hash = window.location.hash.slice(1);
+            if (hash) {
+                const link = document.querySelector(`.nav-link[data-path="${hash}"]`);
+                if (link) {
+                    loadPRD(hash, link);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
