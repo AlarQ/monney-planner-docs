@@ -30,19 +30,19 @@ The current CSV import system has significant usability issues:
 ### Design Principles
 
 1. **AI-First Approach**: Remove all bank-specific adapters. Use OpenAI for universal column mapping
-2. **Single Upload Flow**: File uploaded once during analyze. Server returns pre-parsed transactions. Confirm endpoint receives parsed data, not the file again
+2. **Two-Step Flow**: Analyze returns AI mapping + sample preview. Confirm receives file + confirmed mapping for full parsing
 3. **User Override**: Always allow manual column mapping when AI suggestions are wrong
 4. **Full Replacement**: Replace existing import endpoints entirely (not a gradual migration)
-5. **Code Migration**: Migrate useful utilities (delimiter detection, amount parsing) from existing implementation to new module
+5. **Extend Existing Structure**: Add new models to existing `domain/transaction/models/`. Keep parsing utilities in `services/`
 
 ### New Import Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  STEP 1: Upload & Parse (Single File Upload)                    │
+│  STEP 1: Upload & Analyze (File Upload #1)                      │
 │  ┌─────────┐    ┌─────────────┐    ┌──────────────────┐        │
 │  │ Upload  │───▶│ Parse CSV   │───▶│ Extract Headers  │        │
-│  │ CSV     │    │ (detect     │    │ + ALL Rows       │        │
+│  │ CSV     │    │ (detect     │    │ + Sample Rows    │        │
 │  └─────────┘    │ delimiter)  │    └────────┬─────────┘        │
 └─────────────────────────────────────────────┼──────────────────┘
                                               │
@@ -59,12 +59,14 @@ The current CSV import system has significant usability issues:
 │                                                                 │
 │  Response includes:                                             │
 │  - ai_mapping (AI suggestions)                                  │
-│  - sample_rows (for UI preview)                                 │
-│  - parsed_transactions (ALL rows pre-parsed with AI mapping)    │
+│  - sample_rows (raw data for UI preview - first 5-10 rows)     │
+│  - file_info (row count, delimiter, etc.)                      │
+│  - warnings (missing columns, etc.)                            │
+│  NOTE: Does NOT include parsed transactions (parse on confirm) │
 └─────────────────────────────────────────────┬──────────────────┘
                                               │
 ┌─────────────────────────────────────────────▼──────────────────┐
-│  STEP 3: User Review & Approval                                 │
+│  STEP 3: User Review & Mapping Confirmation                     │
 │  ┌────────────────────────────────────────────────────────┐    │
 │  │ UI shows:                                              │    │
 │  │ ┌──────────────┬────────────────┬─────────────────┐   │    │
@@ -77,7 +79,7 @@ The current CSV import system has significant usability issues:
 │  │ │ Currency     │ Not Found    ▼ │ [default: PLN]  │   │    │
 │  │ └──────────────┴────────────────┴─────────────────┘   │    │
 │  │                                                        │    │
-│  │ Preview (first 5 rows with mapping applied):           │    │
+│  │ Preview (sample rows with current mapping applied):    │    │
 │  │ ┌─────────┬─────────┬────────────┬────────┐           │    │
 │  │ │ Date    │ Merchant│ Description│ Amount │           │    │
 │  │ ├─────────┼─────────┼────────────┼────────┤           │    │
@@ -87,16 +89,23 @@ The current CSV import system has significant usability issues:
 │  │                                                        │    │
 │  │ [  Cancel  ]                [ Approve & Import ]       │    │
 │  └────────────────────────────────────────────────────────┘    │
+│  Note: Preview is rendered client-side using sample_rows +     │
+│  current mapping. No server call needed for preview updates.   │
 └─────────────────────────────────────────────┬──────────────────┘
                                               │ (on Approve)
 ┌─────────────────────────────────────────────▼──────────────────┐
-│  STEP 4: Confirm Import (No Re-upload)                          │
+│  STEP 4: Confirm Import (File Upload #2)                        │
 │  ┌─────────────────┐    ┌─────────────────┐    ┌────────────┐  │
-│  │ Send parsed_    │───▶│ Create          │───▶│ Start AI   │  │
-│  │ transactions    │    │ Transactions    │    │ Categori-  │  │
-│  │ from analyze    │    │                 │    │ zation Job │  │
-│  └─────────────────┘    └─────────────────┘    └────────────┘  │
-│                                                                 │
+│  │ Re-upload file  │───▶│ Parse ALL rows  │───▶│ Create     │  │
+│  │ + confirmed     │    │ with confirmed  │    │ Transactions│  │
+│  │ mapping + opts  │    │ mapping         │    │            │  │
+│  └─────────────────┘    └─────────────────┘    └─────┬──────┘  │
+│                                                       │         │
+│                                              ┌────────▼───────┐ │
+│                                              │ Start AI       │ │
+│                                              │ Categorization │ │
+│                                              │ Job            │ │
+│                                              └────────────────┘ │
 │  Note: Uses existing CategorizationJob infrastructure           │
 │  (max 3 concurrent jobs per user, persistent job tracking)      │
 └────────────────────────────────────────────────────────────────┘
@@ -111,38 +120,19 @@ The current CSV import system has significant usability issues:
 | Decision | Rationale |
 |----------|-----------|
 | **AI-first, no adapters** | Eliminates per-bank maintenance cost. AI handles any CSV format universally. |
-| **Single file upload** | File uploaded once on analyze. Server returns pre-parsed transactions. Confirm receives parsed data, no re-upload. Saves bandwidth and improves UX. |
-| **Clean new module** | New `domain/csv_import/` module instead of extending old adapter architecture. Old paradigm (bank detection → adapter) doesn't fit AI-first approach. |
-| **Migrate useful utilities** | Delimiter detection and amount parsing logic are valuable. Migrate to new module rather than rewriting. |
+| **Parse on confirm, not analyze** | Analyze returns sample rows + AI mapping only. Full parsing happens on confirm. Keeps response payload small and avoids memory issues with large files. |
+| **Two file uploads** | File uploaded on analyze (for AI mapping) and confirm (for full parsing). Stateless design - no server-side file storage needed. |
+| **Extend existing domain** | Add new models to `domain/transaction/models/csv.rs`. Keep parsing utilities in `services/csv_parsing/`. No new bounded context needed. |
+| **Client-side preview** | Frontend renders preview using sample_rows + current mapping. Mapping changes don't require server calls. |
 | **Learned mappings cache (Phase 3)** | Store confirmed mappings by header hash. Skip AI for known formats. Reduces API costs over time. |
 
 ### 3.1 API Endpoints
 
 #### POST `/v1/users/{user_id}/transactions/import/analyze`
-Upload CSV and get AI-suggested column mapping with pre-parsed transactions.
+Upload CSV and get AI-suggested column mapping. Returns sample rows for preview, NOT parsed transactions.
 
 **Request**: Multipart form with:
 - `file`: CSV file (required)
-- `mapping_override`: JSON string with user-specified mapping (optional)
-
-**Behavior**:
-- If `mapping_override` is NOT provided → Call AI for column mapping suggestions, parse with AI mapping
-- If `mapping_override` IS provided → Skip AI call, parse directly with provided mapping
-
-This allows users to re-analyze with corrected mapping without wasting an AI API call.
-
-**Example `mapping_override`** (when user corrects AI suggestion):
-```json
-{
-  "date_column": "Post Date",
-  "amount_column": "Amount",
-  "merchant_column": "Description",
-  "description_column": null,
-  "currency_column": null,
-  "date_format": "MM/DD/YYYY",
-  "amount_format": "standard"
-}
-```
 
 **Response**:
 ```json
@@ -155,7 +145,10 @@ This allows users to re-analyze with corrected mapping without wasting an AI API
   "headers": ["Trans Date", "Post Date", "Description", "Amount", "Category"],
   "sample_rows": [
     ["01/15/2024", "01/16/2024", "AMAZON.COM", "-45.99", "Shopping"],
-    ["01/14/2024", "01/15/2024", "STARBUCKS", "-5.50", "Food"]
+    ["01/14/2024", "01/15/2024", "STARBUCKS", "-5.50", "Food"],
+    ["01/13/2024", "01/14/2024", "WALMART", "-123.45", "Shopping"],
+    ["01/12/2024", "01/13/2024", "NETFLIX", "-15.99", "Entertainment"],
+    ["01/11/2024", "01/12/2024", "UBER", "-22.00", "Transportation"]
   ],
   "ai_mapping": {
     "date_column": "Trans Date",
@@ -171,31 +164,6 @@ This allows users to re-analyze with corrected mapping without wasting an AI API
     "confidence": 0.89,
     "reasoning": "Trans Date contains transaction dates, Amount has monetary values, Description contains merchant names"
   },
-  "parsed_transactions": [
-    {
-      "row_index": 1,
-      "date": "2024-01-15",
-      "amount": -45.99,
-      "merchant": "AMAZON.COM",
-      "description": null,
-      "currency": "PLN"
-    },
-    {
-      "row_index": 2,
-      "date": "2024-01-14",
-      "amount": -5.50,
-      "merchant": "STARBUCKS",
-      "description": null,
-      "currency": "PLN"
-    }
-  ],
-  "parse_errors": [
-    {
-      "row_index": 45,
-      "error": "Invalid date format",
-      "raw_values": ["N/A", "01/16/2024", "UNKNOWN", "-10.00", ""]
-    }
-  ],
   "warnings": [
     {
       "type": "missing_currency",
@@ -205,35 +173,37 @@ This allows users to re-analyze with corrected mapping without wasting an AI API
 }
 ```
 
-**Key Design Decision**: The response includes `parsed_transactions` - ALL rows pre-parsed using the AI mapping. This eliminates the need for file re-upload on confirm. Frontend sends these parsed transactions back on confirm.
+**Key Design Decision**: Response does NOT include `parsed_transactions`. Full parsing happens on `/confirm`. This keeps the response small and avoids memory issues with large files.
 
 #### POST `/v1/users/{user_id}/transactions/import/confirm`
-Confirm and create transactions. No file re-upload needed.
+Re-upload CSV with confirmed mapping. Parses all rows and creates transactions.
 
-**Request**: JSON body with parsed transactions from analyze response
+**Request**: Multipart form with:
+- `file`: CSV file (required, same file as analyze)
+- `mapping`: JSON string with confirmed column mapping (required)
+- `options`: JSON string with import options (required)
 
+**Example `mapping`**:
 ```json
 {
-  "transactions": [
-    {
-      "row_index": 1,
-      "date": "2024-01-15",
-      "amount": -45.99,
-      "merchant": "AMAZON.COM",
-      "description": null,
-      "currency": "PLN"
-    }
-  ],
-  "options": {
-    "default_currency": "PLN",
-    "skip_zero_amounts": true
-  }
+  "date_column": "Trans Date",
+  "amount_column": "Amount",
+  "merchant_column": "Description",
+  "description_column": null,
+  "currency_column": null,
+  "date_format": "MM/DD/YYYY",
+  "amount_format": "standard"
 }
 ```
 
-**Note**: If user overrides column mapping in UI, frontend can either:
-1. Accept the pre-parsed data as-is (95% of cases - user accepts AI mapping)
-2. Re-upload file for re-parsing with new mapping (5% edge case - user changes mapping)
+**Example `options`**:
+```json
+{
+  "default_currency": "PLN",
+  "skip_zero_amounts": true,
+  "invert_amounts": false
+}
+```
 
 **Response**:
 ```json
@@ -244,6 +214,13 @@ Confirm and create transactions. No file re-upload needed.
     "skipped_rows": 2,
     "transaction_ids": ["uuid1", "uuid2", "..."]
   },
+  "parse_errors": [
+    {
+      "row_index": 45,
+      "error": "Invalid date format",
+      "raw_values": ["N/A", "01/16/2024", "UNKNOWN", "-10.00", ""]
+    }
+  ],
   "categorization_job_id": "uuid"
 }
 ```
@@ -314,10 +291,12 @@ Analyze and provide the column mapping.
 
 ### 3.3 Data Models
 
-#### New Domain Models
+#### Location: `domain/transaction/models/csv.rs`
+Extend the existing CSV models file with new types. These are value objects for the AI-powered import flow.
 
 ```rust
 // Value object for AI mapping response
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiColumnMapping {
     pub date_column: String,              // Required
     pub amount_column: String,            // Required
@@ -355,35 +334,27 @@ pub enum AmountFormat {
     European,      // 1.234,56 (comma decimal, dot thousands)
 }
 
-// User-provided mapping (may override AI suggestions)
+// User-confirmed mapping (sent with /confirm request)
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnMapping {
     pub date_column: String,
     pub amount_column: String,
     pub merchant_column: Option<String>,
     pub description_column: Option<String>,
     pub currency_column: Option<String>,
-}
-
-pub struct ImportOptions {
     pub date_format: DateFormat,
     pub amount_format: AmountFormat,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImportOptions {
     pub default_currency: String,
-    pub skip_header_rows: u32,
     pub skip_zero_amounts: bool,
     pub invert_amounts: bool,  // For banks that report expenses as positive
 }
 
-// Pre-parsed transaction (returned from /analyze, sent back to /confirm)
-pub struct ParsedTransaction {
-    pub row_index: u32,
-    pub date: NaiveDate,
-    pub amount: Decimal,
-    pub merchant: Option<String>,
-    pub description: Option<String>,
-    pub currency: String,
-}
-
-// Parse error for rows that failed parsing
+// Parse error for rows that failed parsing (returned from /confirm)
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParseError {
     pub row_index: u32,
     pub error: String,
@@ -391,36 +362,38 @@ pub struct ParseError {
 }
 
 // Analysis result (returned from /analyze endpoint)
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CsvAnalysisResult {
     pub file_info: FileInfo,
     pub headers: Vec<String>,
-    pub sample_rows: Vec<Vec<String>>,          // Raw data for UI display
+    pub sample_rows: Vec<Vec<String>>,  // Raw data for UI preview (first 5-10 rows)
     pub ai_mapping: AiColumnMapping,
-    pub parsed_transactions: Vec<ParsedTransaction>,  // Pre-parsed with AI mapping
-    pub parse_errors: Vec<ParseError>,
     pub warnings: Vec<ImportWarning>,
+    // NOTE: No parsed_transactions - parsing happens on /confirm
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileInfo {
     pub row_count: usize,
     pub detected_delimiter: char,
     pub has_header_row: bool,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImportWarning {
     pub warning_type: String,
     pub message: String,
 }
 
-// Confirm request (receives parsed transactions, no file re-upload)
-pub struct ConfirmImportRequest {
-    pub transactions: Vec<ParsedTransaction>,
-    pub options: ConfirmOptions,
-}
-
-pub struct ConfirmOptions {
-    pub default_currency: String,
-    pub skip_zero_amounts: bool,
+// Import result (returned from /confirm endpoint)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CsvImportResult {
+    pub total_rows: usize,
+    pub imported_rows: usize,
+    pub skipped_rows: usize,
+    pub transaction_ids: Vec<Uuid>,
+    pub parse_errors: Vec<ParseError>,
+    pub categorization_job_id: Option<Uuid>,
 }
 ```
 
@@ -432,33 +405,34 @@ pub struct ConfirmOptions {
 
 Delete the following files/modules:
 - `src/services/csv_formats/ing_bank.rs`
-- `src/services/csv_formats/generic_csv.rs`
+- `src/services/csv_formats/generic.rs`
 - `src/services/csv_formats/registry.rs`
-- `src/services/csv_formats/mod.rs`
 
-The `CsvFormat` trait and all adapters will be replaced with the AI-powered approach.
+The `CsvFormatAdapter` trait and all adapters will be replaced with the AI-powered approach.
 
-#### Migrate Useful Utilities
+#### Keep & Refactor Utilities in Services Layer
 
-Before deleting, migrate these utilities to the new `domain/csv_import/` module:
+Refactor `src/services/csv_formats/` → `src/services/csv_parsing/`:
 
-| Source File | Utility | Target |
-|-------------|---------|--------|
-| `detection.rs` | `detect_delimiter()` - scoring algorithm for delimiter detection | `domain/csv_import/parsing.rs` |
-| `amount_parsing.rs` | Amount parsing logic (PLN symbols, comma/dot normalization, unicode minus) | `domain/csv_import/parsing.rs` |
+| Keep | Refactor | Description |
+|------|----------|-------------|
+| `detection.rs` | Minor cleanup | `detect_delimiter()` - scoring algorithm |
+| `amount_parsing.rs` | Minor cleanup | Amount parsing (unicode minus, European format) |
+| - | New file | `date_parsing.rs` - date parsing for all DateFormat variants |
+| `mod.rs` | Rewrite | Remove adapter exports, expose parsing functions |
 
-These utilities are well-tested and handle edge cases. Rewrite only the interface, keep the core logic.
+These utilities are infrastructure concerns and belong in `services/`, not `domain/`.
 
-#### New Domain Module: `domain/csv_import/`
+#### Extend Domain Models
 
-| Component | Description |
-|-----------|-------------|
-| `AiColumnMapping` | Value object for AI mapping response |
-| `ColumnMapping` | Value object for user-confirmed mapping |
-| `ImportOptions` | Value object for import configuration |
-| `DateFormat` | Enum for date format variants |
-| `AmountFormat` | Enum for amount format variants |
-| `CsvAnalysisResult` | Aggregate for analyze endpoint response |
+Add new types to existing `domain/transaction/models/csv.rs`:
+- `AiColumnMapping` - AI response value object
+- `ColumnMapping` - User-confirmed mapping
+- `ImportOptions` - Import configuration
+- `DateFormat` and `AmountFormat` enums
+- `CsvAnalysisResult` - Analyze endpoint response
+- `ImportResult` - Confirm endpoint response
+- `ParseError`, `FileInfo`, `ImportWarning`
 
 #### Extend AiService Trait
 
@@ -482,43 +456,43 @@ pub struct CsvColumnAnalysisRequest {
 }
 ```
 
-#### New CSV Parsing Service
-
-Create `domain/csv_import/parsing.rs` with free functions:
+#### New Parsing Functions in `services/csv_parsing/`
 
 ```rust
-/// Detect delimiter by trying common options and scoring
+// detection.rs (keep existing, minor cleanup)
 pub fn detect_delimiter(csv_content: &str) -> char
 
+// parsing.rs (new file)
 /// Parse CSV and extract headers + sample rows
 pub fn extract_csv_structure(csv_content: &str, delimiter: char)
     -> Result<(Vec<String>, Vec<Vec<String>>, usize), TransactionError>
 
-/// Parse a single row using confirmed mapping
-pub fn parse_row_with_mapping(
-    row: &[String],
+/// Parse all rows using confirmed mapping
+pub fn parse_all_rows(
+    csv_content: &str,
+    delimiter: char,
     headers: &[String],
     mapping: &ColumnMapping,
     options: &ImportOptions,
-) -> Result<ParsedTransaction, RowParseError>
+) -> Result<(Vec<Transaction>, Vec<ParseError>), TransactionError>
 
-/// Parse date string according to format
-pub fn parse_date(value: &str, format: &DateFormat) -> Result<NaiveDate, ParseError>
+// date_parsing.rs (new file)
+pub fn parse_date(value: &str, format: &DateFormat) -> Result<NaiveDate, TransactionError>
 
-/// Parse amount string according to format
-pub fn parse_amount(value: &str, format: &AmountFormat) -> Result<Decimal, ParseError>
+// amount_parsing.rs (keep existing)
+pub fn parse_amount(value: &str, format: &AmountFormat) -> Result<Decimal, TransactionError>
 ```
 
 #### New API Handlers
 
 | Endpoint | Handler |
 |----------|---------|
-| `POST /import/analyze` | `analyze_csv_handler` |
-| `POST /import/confirm` | `confirm_import_handler` |
+| `POST /import/analyze` | `analyze_csv_handler` - multipart file upload, AI call |
+| `POST /import/confirm` | `confirm_import_handler` - multipart file + mapping, full parsing |
 
 Remove old handlers:
-- `preview_csv_handler`
-- `confirm_csv_import_async_handler`
+- `preview_csv_import` (in `handlers.rs`)
+- `confirm_csv_import_async` (in `handlers.rs`)
 
 ---
 
@@ -536,6 +510,7 @@ Remove old handlers:
 #### New Types: `src/types/csvImport.ts`
 
 ```typescript
+// Response from /analyze endpoint
 interface CsvAnalysisResponse {
   file_info: {
     row_count: number;
@@ -543,11 +518,10 @@ interface CsvAnalysisResponse {
     has_header_row: boolean;
   };
   headers: string[];
-  sample_rows: string[][];
+  sample_rows: string[][];  // Raw data for client-side preview
   ai_mapping: AiColumnMapping;
-  parsed_transactions: ParsedTransaction[];  // Pre-parsed with AI mapping
-  parse_errors: ParseError[];
   warnings: ImportWarning[];
+  // NOTE: No parsed_transactions - parsing happens on /confirm
 }
 
 interface AiColumnMapping {
@@ -565,14 +539,21 @@ interface AiColumnMapping {
   reasoning: string;
 }
 
-// Pre-parsed transaction (returned from analyze, sent to confirm)
-interface ParsedTransaction {
-  row_index: number;
-  date: string;  // ISO format YYYY-MM-DD
-  amount: number;
-  merchant: string | null;
-  description: string | null;
-  currency: string;
+// User-confirmed mapping (sent with /confirm request)
+interface ColumnMapping {
+  date_column: string;
+  amount_column: string;
+  merchant_column: string | null;
+  description_column: string | null;
+  currency_column: string | null;
+  date_format: DateFormat;
+  amount_format: AmountFormat;
+}
+
+interface ImportOptions {
+  default_currency: string;
+  skip_zero_amounts: boolean;
+  invert_amounts: boolean;
 }
 
 interface ParseError {
@@ -586,17 +567,7 @@ interface ImportWarning {
   message: string;
 }
 
-// Confirm request - no file re-upload, sends parsed transactions
-interface ConfirmImportRequest {
-  transactions: ParsedTransaction[];
-  options: ConfirmOptions;
-}
-
-interface ConfirmOptions {
-  default_currency: string;
-  skip_zero_amounts: boolean;
-}
-
+// Response from /confirm endpoint
 interface ImportResult {
   import_result: {
     total_rows: number;
@@ -604,6 +575,7 @@ interface ImportResult {
     skipped_rows: number;
     transaction_ids: string[];
   };
+  parse_errors: ParseError[];
   categorization_job_id: string;
 }
 
@@ -615,24 +587,24 @@ type AmountFormat = 'standard' | 'european';
 
 ```typescript
 export const csvImportService = {
-  // Step 1: Upload file, get AI mapping + pre-parsed transactions
+  // Step 1: Upload file, get AI mapping + sample rows
   analyzeCsv: async (file: File): Promise<CsvAnalysisResponse> => {
     const formData = new FormData();
     formData.append('file', file);
     return api.post('/import/analyze', formData);
   },
 
-  // Step 2: Confirm with parsed transactions (no file re-upload)
-  confirmImport: async (request: ConfirmImportRequest): Promise<ImportResult> => {
-    return api.post('/import/confirm', request);  // JSON body, not multipart
-  },
-
-  // Optional: Re-analyze with different mapping (edge case - user overrides mapping)
-  reAnalyzeWithMapping: async (file: File, mapping: ColumnMapping): Promise<CsvAnalysisResponse> => {
+  // Step 2: Re-upload file with confirmed mapping, parse and create transactions
+  confirmImport: async (
+    file: File,
+    mapping: ColumnMapping,
+    options: ImportOptions
+  ): Promise<ImportResult> => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('mapping_override', JSON.stringify(mapping));
-    return api.post('/import/analyze', formData);
+    formData.append('mapping', JSON.stringify(mapping));
+    formData.append('options', JSON.stringify(options));
+    return api.post('/import/confirm', formData);
   },
 };
 ```
@@ -641,42 +613,90 @@ export const csvImportService = {
 
 | Hook | Purpose |
 |------|---------|
-| `useCsvImportWizard` | Custom hook for wizard state (step, file, analysis result with parsed transactions) |
+| `useCsvImportWizard` | Custom hook for wizard state (step, file, mapping, options) |
 
 ```typescript
 function useCsvImportWizard() {
   const [step, setStep] = useState<'upload' | 'review' | 'importing' | 'complete'>('upload');
-  const [file, setFile] = useState<File | null>(null);  // Kept for edge case re-analysis
+  const [file, setFile] = useState<File | null>(null);
   const [analysisResult, setAnalysisResult] = useState<CsvAnalysisResponse | null>(null);
-  const [options, setOptions] = useState<ConfirmOptions>(defaultOptions);
+  const [mapping, setMapping] = useState<ColumnMapping | null>(null);
+  const [options, setOptions] = useState<ImportOptions>(defaultOptions);
 
-  const handleAnalyze = async (file: File) => {
-    setFile(file);
-    const result = await csvImportService.analyzeCsv(file);
-    setAnalysisResult(result);  // Contains parsed_transactions
+  const handleAnalyze = async (uploadedFile: File) => {
+    setFile(uploadedFile);
+    const result = await csvImportService.analyzeCsv(uploadedFile);
+    setAnalysisResult(result);
+    // Initialize mapping from AI suggestion
+    setMapping({
+      date_column: result.ai_mapping.date_column,
+      amount_column: result.ai_mapping.amount_column,
+      merchant_column: result.ai_mapping.merchant_column,
+      description_column: result.ai_mapping.description_column,
+      currency_column: result.ai_mapping.currency_column,
+      date_format: result.ai_mapping.date_format,
+      amount_format: result.ai_mapping.amount_format,
+    });
     setStep('review');
   };
 
   const handleConfirm = async () => {
-    if (!analysisResult) return;
+    if (!file || !mapping) return;
     setStep('importing');
-    // Send parsed_transactions back - no file re-upload
-    const result = await csvImportService.confirmImport({
-      transactions: analysisResult.parsed_transactions,
-      options,
-    });
+    // Re-upload file with confirmed mapping
+    const result = await csvImportService.confirmImport(file, mapping, options);
     setStep('complete');
     return result;
   };
 
-  // Edge case: user overrides mapping, need to re-parse
-  const handleMappingOverride = async (newMapping: ColumnMapping) => {
-    if (!file) return;
-    const result = await csvImportService.reAnalyzeWithMapping(file, newMapping);
-    setAnalysisResult(result);
+  // User can modify mapping in UI - no server call needed
+  const handleMappingChange = (newMapping: ColumnMapping) => {
+    setMapping(newMapping);
+    // Preview updates client-side using sample_rows + new mapping
   };
 
-  return { step, analysisResult, options, setOptions, handleAnalyze, handleConfirm, handleMappingOverride };
+  return {
+    step,
+    file,
+    analysisResult,
+    mapping,
+    options,
+    setOptions,
+    handleAnalyze,
+    handleConfirm,
+    handleMappingChange
+  };
+}
+```
+
+#### Client-Side Preview Logic
+
+The preview table renders sample rows using the current mapping. When user changes mapping in dropdowns, preview updates instantly without server calls:
+
+```typescript
+function applyMappingToRow(
+  row: string[],
+  headers: string[],
+  mapping: ColumnMapping
+): PreviewTransaction | null {
+  const getColumnValue = (columnName: string | null) => {
+    if (!columnName) return null;
+    const index = headers.indexOf(columnName);
+    return index >= 0 ? row[index] : null;
+  };
+
+  const dateStr = getColumnValue(mapping.date_column);
+  const amountStr = getColumnValue(mapping.amount_column);
+
+  if (!dateStr || !amountStr) return null;
+
+  return {
+    date: parseDate(dateStr, mapping.date_format),
+    amount: parseAmount(amountStr, mapping.amount_format),
+    merchant: getColumnValue(mapping.merchant_column),
+    description: getColumnValue(mapping.description_column),
+    currency: getColumnValue(mapping.currency_column) || options.default_currency,
+  };
 }
 ```
 
@@ -688,17 +708,17 @@ function useCsvImportWizard() {
 
 | Route | Content Type | Action |
 |-------|--------------|--------|
-| `POST /v1/users/{user_id}/transactions/import/analyze` | multipart/form-data | Proxy to transaction-service (file upload) |
-| `POST /v1/users/{user_id}/transactions/import/confirm` | application/json | Proxy to transaction-service (no file) |
+| `POST /v1/users/{user_id}/transactions/import/analyze` | multipart/form-data | Proxy to transaction-service (file upload, AI call) |
+| `POST /v1/users/{user_id}/transactions/import/confirm` | multipart/form-data | Proxy to transaction-service (file upload, parsing) |
 
 Remove old routes:
 - `POST /import/preview`
 - `POST /import/confirm-async`
 
 #### Considerations
-- Handle multipart/form-data forwarding for analyze endpoint only
-- Confirm endpoint is standard JSON - no special handling needed
+- Handle multipart/form-data forwarding for both endpoints
 - Set appropriate timeout for analyze endpoint (AI call may take 5-10 seconds)
+- Set appropriate timeout for confirm endpoint (parsing large files may take time)
 
 ---
 
@@ -722,9 +742,9 @@ Remove old routes:
 | **Low confidence mapping** | confidence < 0.7 | Show warning in UI, highlight fields |
 | **AI hallucination** | Suggested column doesn't exist | Validate AI response against actual headers, return error |
 | **Ambiguous columns** | Multiple date/amount columns | AI explains choice in reasoning, user can override |
-| **AI service unavailable** | API timeout/error | Return error, show manual mapping UI only |
+| **AI service unavailable** | API timeout/error | Return error with clear message, user must retry |
 | **Missing required fields** | AI returns null for date/amount | Return error with clear message |
-| **User overrides mapping** | User changes column selection in UI | Call `/analyze` with `mapping_override` parameter, skip AI, re-parse with user mapping |
+| **User overrides mapping** | User changes column selection in UI | Preview updates client-side, confirmed mapping sent on /confirm |
 
 ### 4.3 Data Parsing Issues
 
@@ -754,42 +774,53 @@ Remove old routes:
 ### Phase 1: Backend Core
 **Scope**: New endpoints and AI integration
 
-1. **Create CSV Import Domain Module**
-   - Add `domain/csv_import/` with value objects and parsing functions
-   - Implement delimiter detection
-   - Implement date/amount parsing for all formats
+1. **Extend Domain Models**
+   - Add new types to `domain/transaction/models/csv.rs`
+   - `AiColumnMapping`, `ColumnMapping`, `ImportOptions`, etc.
+   - `DateFormat` and `AmountFormat` enums
 
-2. **Extend AI Service**
+2. **Refactor CSV Utilities**
+   - Rename `services/csv_formats/` → `services/csv_parsing/`
+   - Keep `detection.rs` and `amount_parsing.rs`
+   - Add `date_parsing.rs` for DateFormat variants
+   - Add `parsing.rs` with `parse_all_rows()` function
+   - Remove adapter files (`ing_bank.rs`, `generic.rs`, `registry.rs`)
+
+3. **Extend AI Service**
    - Add `analyze_csv_columns` method to `AiService` trait
    - Implement in `AiUtilsService`
    - Add response validation (ensure columns exist in headers)
 
-3. **Create New API Endpoints**
-   - `POST /import/analyze` - upload, parse, call AI
-   - `POST /import/confirm` - parse with mapping, create transactions
+4. **Create New API Endpoints**
+   - `POST /import/analyze` - upload file, call AI, return sample + mapping
+   - `POST /import/confirm` - upload file + mapping, parse all rows, create transactions
 
-4. **Remove Old Implementation**
-   - Delete `src/services/csv_formats/` directory
-   - Remove old `/import/preview` and `/import/confirm-async` endpoints
+5. **Remove Old Implementation**
+   - Remove old handlers (`preview_csv_import`, `confirm_csv_import_async`)
    - Update tests
 
 ### Phase 2: Frontend Integration
 **Scope**: New wizard UI
 
-1. **Create Import Wizard**
+1. **Create Types and Services**
+   - Add types in `src/types/csvImport.ts`
+   - Add `csvImportService.ts` with analyze/confirm methods
+
+2. **Create Import Wizard**
    - `CsvImportWizard` container with step management
    - `ColumnMappingReview` with AI suggestions + override dropdowns
-   - `MappingPreviewTable` with live preview
-   - `ImportOptionsForm` for date format, currency, etc.
+   - `MappingPreviewTable` with client-side preview rendering
+   - `ImportOptionsForm` for currency, skip options
+   - `useCsvImportWizard` custom hook for state management
 
-2. **API Integration**
-   - `csvImportService.ts` with analyze/confirm methods
-   - `useCsvImportWizard` custom hook
-   - Error handling with snackbar notifications
+3. **Client-Side Preview**
+   - Implement date/amount parsing utilities for preview
+   - Preview updates instantly when user changes mapping
 
-3. **Replace Existing Flow**
+4. **Replace Existing Flow**
    - Update transactions page to use new wizard
    - Remove old import components
+   - Error handling with snackbar notifications
 
 ### Phase 3: Polish & Optimization
 **Scope**: Edge cases, UX improvements, and cost optimization
@@ -820,49 +851,52 @@ Remove old routes:
 
 ### Transaction Service
 
-- [ ] Create `domain/csv_import/` module
+- [ ] Extend domain models in `domain/transaction/models/csv.rs`
   - [ ] `AiColumnMapping` value object
   - [ ] `ColumnMapping` value object
   - [ ] `ImportOptions` value object
   - [ ] `DateFormat` and `AmountFormat` enums
-  - [ ] `ParsedTransaction` struct
   - [ ] `ParseError` struct
   - [ ] `CsvAnalysisResult` struct
-  - [ ] `ConfirmImportRequest` struct
-- [ ] Migrate utilities from existing code
-  - [ ] Copy `detect_delimiter()` logic from `detection.rs`
-  - [ ] Copy amount parsing logic from `amount_parsing.rs`
-  - [ ] Adapt interfaces to new module structure
-- [ ] Implement parsing functions in `domain/csv_import/parsing.rs`
-  - [ ] `detect_delimiter()` (migrated)
-  - [ ] `extract_csv_structure()`
-  - [ ] `parse_all_rows()` - parse entire CSV with mapping, return `Vec<ParsedTransaction>`
-  - [ ] `parse_date()` for all DateFormat variants
-  - [ ] `parse_amount()` for all AmountFormat variants (migrated)
+  - [ ] `ImportResult` struct
+  - [ ] `FileInfo` and `ImportWarning` structs
+- [ ] Refactor `services/csv_formats/` → `services/csv_parsing/`
+  - [ ] Keep `detection.rs` (minor cleanup)
+  - [ ] Keep `amount_parsing.rs` (minor cleanup)
+  - [ ] Create `date_parsing.rs` with `parse_date()` for all DateFormat variants
+  - [ ] Create `parsing.rs` with `extract_csv_structure()` and `parse_all_rows()`
+  - [ ] Update `mod.rs` to expose new API
+  - [ ] Delete `ing_bank.rs`
+  - [ ] Delete `generic.rs`
+  - [ ] Delete `registry.rs`
 - [ ] Extend `AiService` trait with `analyze_csv_columns()` method
 - [ ] Implement AI column analysis in `AiUtilsService`
   - [ ] Build prompt with headers + sample rows
   - [ ] Parse and validate AI response
+  - [ ] Ensure suggested columns exist in actual headers
   - [ ] Handle AI errors gracefully
 - [ ] Create API handlers
-  - [ ] `analyze_csv_handler` - multipart upload, parse, AI call, return pre-parsed transactions
-    - [ ] Support optional `mapping_override` parameter to skip AI and use provided mapping
-  - [ ] `confirm_import_handler` - JSON body with parsed transactions (no file upload), create transactions
+  - [ ] `analyze_csv_handler` - multipart upload, AI call, return sample + mapping
+  - [ ] `confirm_import_handler` - multipart upload with mapping/options, parse all rows, create transactions
+- [ ] Remove old handlers
+  - [ ] Delete `preview_csv_import` handler
+  - [ ] Delete `confirm_csv_import_async` handler
 - [ ] Add OpenAPI documentation with `utoipa`
-- [ ] Delete old CSV format adapters
-  - [ ] Remove `src/services/csv_formats/` directory
-  - [ ] Remove old API handlers (`preview_csv_handler`, `confirm_csv_import_async_handler`)
 - [ ] Update/add tests
-  - [ ] Unit tests for parsing functions
+  - [ ] Unit tests for date parsing
+  - [ ] Unit tests for amount parsing
   - [ ] Integration tests for new endpoints
   - [ ] AI response validation tests
-  - [ ] Test that confirm works without file re-upload
 
 ### Frontend
 
 - [ ] Create types in `src/types/csvImport.ts`
 - [ ] Create `csvImportService.ts`
 - [ ] Create `useCsvImportWizard` hook
+- [ ] Implement client-side preview utilities
+  - [ ] Date parsing for preview
+  - [ ] Amount parsing for preview
+  - [ ] `applyMappingToRow()` function
 - [ ] Create components in `src/components/transactions/import/`
   - [ ] `CsvImportWizard`
   - [ ] `ColumnMappingReview`
@@ -875,10 +909,10 @@ Remove old routes:
 ### BFF
 
 - [ ] Add route for `/import/analyze` (multipart forwarding)
-- [ ] Add route for `/import/confirm` (JSON forwarding - no file)
+- [ ] Add route for `/import/confirm` (multipart forwarding)
 - [ ] Remove old `/import/preview` and `/import/confirm-async` routes
-- [ ] Configure multipart forwarding for analyze endpoint
-- [ ] Set appropriate timeout (15 seconds for AI on analyze endpoint)
+- [ ] Configure multipart forwarding for both endpoints
+- [ ] Set appropriate timeouts (15 seconds for AI, longer for large file parsing)
 
 ---
 
@@ -1002,6 +1036,6 @@ The following features have been removed to reduce complexity. They may be recon
 
 1. ~~**Saved Column Mappings**~~ - Moved to Phase 3 as "Learned Mappings Cache" (automatic, not user-managed)
 2. **Encoding Detection** - Auto-detect non-UTF8 encodings (chardetng/encoding_rs)
-3. ~~**Session Storage**~~ - Not needed with single-upload flow (parsed transactions returned in analyze response)
-4. **Bank Format Templates** - Community-contributed mapping templates
-5. **Import History** - Track past imports with rollback capability
+3. **Bank Format Templates** - Community-contributed mapping templates
+4. **Import History** - Track past imports with rollback capability
+5. **Server-Side File Storage** - File re-uploaded on confirm instead of stored server-side (simpler, stateless)
