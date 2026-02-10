@@ -140,10 +140,12 @@
             border-radius: 8px;
             border: 1px solid var(--primary);
             overflow-x: auto;
-            font-family: 'Fira Code', 'Courier New', monospace;
-            font-size: 0.85rem;
-            line-height: 1.5;
-            color: var(--text);
+            display: flex;
+            justify-content: center;
+        }
+
+        .arch-diagram .mermaid {
+            max-width: 100%;
         }
 
         /* --- Tech Stack --- */
@@ -313,46 +315,6 @@
             transition: width 1s ease;
         }
 
-        /* --- Links --- */
-        .links-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        .cta-btn {
-            display: inline-block;
-            padding: 0.65rem 1.5rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 0.92rem;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .cta-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.25);
-        }
-
-        .cta-btn.primary {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        .cta-btn.secondary {
-            background: var(--primary);
-            color: var(--text);
-            border: 1px solid var(--primary);
-        }
-
-        .cta-btn.secondary:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
         /* --- Footer --- */
         .showcase-footer {
             text-align: center;
@@ -438,6 +400,27 @@
             }
         }
     </style>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#0f3460',
+                primaryTextColor: '#eaeaea',
+                primaryBorderColor: '#e94560',
+                lineColor: '#e94560',
+                secondaryColor: '#16213e',
+                tertiaryColor: '#1a1a2e',
+                background: '#0a0a1a',
+                mainBkg: '#16213e',
+                secondBkg: '#0f3460',
+                textColor: '#eaeaea',
+                fontSize: '14px'
+            }
+        });
+        window.mermaid = mermaid;
+    </script>
 </head>
 <body>
 
@@ -459,34 +442,35 @@ const PROJECT_CONFIG = {
     architecture: {
         description: "Five independently deployable Rust microservices behind an API gateway, communicating via Kafka events and secured with JWT. Deployed on Kubernetes with Helm charts, monitored with Prometheus and Grafana.",
         diagram: `
-┌──────────────────────────────────────────────────────────────┐
-│                        Browser (React 18)                    │
-│                   localhost:3000 / moneyplanner.local         │
-└─────────────────────────────┬────────────────────────────────┘
-                              │  HTTP / JSON
-┌─────────────────────────────▼────────────────────────────────┐
-│                  BFF - API Gateway (Rust/Axum)               │
-│               Session validation, routing, CORS              │
-│                        Port 8082                             │
-└──┬──────────────┬─────────────────┬──────────────────────────┘
-   │              │                 │
-   │ JWT          │ JWT             │ JWT
-   ▼              ▼                 ▼
-┌────────┐  ┌────────────┐  ┌─────────────┐
-│  User  │  │Transaction │  │   Budget    │
-│Service │  │  Service   │  │  Service    │
-│ :8080  │  │   :8081    │  │   :8083     │
-│        │  │            │  │             │
-│Argon2  │  │ OpenAI API │  │  Kafka      │
-│Sessions│  │ CSV Import │  │  Consumer   │
-└───┬────┘  └──┬────┬────┘  └──────┬──────┘
-    │          │    │              │
-    ▼          ▼    │              │
-┌────────┐ ┌──────┐│   ┌──────────▼──────────┐
-│Postgres│ │Postgr││   │  Kafka (Events)      │
-│ :5432  │ │ :5433│◄───│  int.transaction-    │
-└────────┘ └──────┘    │  update.event        │
-                       └──────────────────────┘`
+graph TB
+    Browser[Browser React 18<br/>localhost:3000 / moneyplanner.local]
+    BFF[BFF - API Gateway Rust/Axum<br/>Session validation, routing, CORS<br/>Port 8082]
+    UserService[User Service<br/>Port 8080<br/>Argon2 Sessions]
+    TransactionService[Transaction Service<br/>Port 8081<br/>OpenAI API, CSV Import]
+    BudgetService[Budget Service<br/>Port 8083<br/>Kafka Consumer]
+    UserDB[(PostgreSQL<br/>:5432)]
+    TransactionDB[(PostgreSQL<br/>:5433)]
+    BudgetDB[(PostgreSQL<br/>:5434)]
+    Kafka[Kafka Events<br/>int.transaction-update.event]
+
+    Browser -->|HTTP/JSON| BFF
+    BFF -->|JWT| UserService
+    BFF -->|JWT| TransactionService
+    BFF -->|JWT| BudgetService
+    UserService --> UserDB
+    TransactionService --> TransactionDB
+    BudgetService --> BudgetDB
+    TransactionService -.->|Publish| Kafka
+    Kafka -.->|Consume| BudgetService
+
+    classDef serviceStyle fill:#16213e,stroke:#e94560,stroke-width:2px,color:#eaeaea
+    classDef dbStyle fill:#0f3460,stroke:#e94560,stroke-width:2px,color:#eaeaea
+    classDef kafkaStyle fill:#1a1a2e,stroke:#e94560,stroke-width:2px,color:#eaeaea
+
+    class UserService,TransactionService,BudgetService,BFF serviceStyle
+    class UserDB,TransactionDB,BudgetDB dbStyle
+    class Kafka kafkaStyle
+        `
     },
 
     techStack: [
@@ -556,10 +540,6 @@ const PROJECT_CONFIG = {
         { label: "Production Readiness", value: 37, type: "percentage" }
     ],
 
-    links: [
-        { label: "GitHub Organization", url: "https://github.com/Alarq", style: "primary" }
-    ],
-
     footer: null
 };
 
@@ -599,7 +579,7 @@ const PROJECT_CONFIG = {
         sections.push({ id, label: 'Architecture' });
         html += `<section class="section" id="${id}"><h2 class="section-title">Architecture</h2>`;
         if (cfg.architecture.description) html += `<p class="arch-text">${esc(cfg.architecture.description)}</p>`;
-        if (cfg.architecture.diagram) html += `<pre class="arch-diagram">${esc(cfg.architecture.diagram.trim())}</pre>`;
+        if (cfg.architecture.diagram) html += `<div class="arch-diagram"><div class="mermaid">${cfg.architecture.diagram.trim()}</div></div>`;
         html += `</section>`;
     }
 
@@ -657,17 +637,6 @@ const PROJECT_CONFIG = {
                 html += `<div class="value">${m.value}</div>`;
             }
             html += `</div>`;
-        });
-        html += `</div></section>`;
-    }
-
-    // --- Links ---
-    if (cfg.links && cfg.links.length) {
-        const id = sectionId('Links');
-        sections.push({ id, label: 'Links' });
-        html += `<section class="section" id="${id}"><h2 class="section-title">Links</h2><div class="links-row">`;
-        cfg.links.forEach(l => {
-            html += `<a href="${esc(l.url)}" class="cta-btn ${l.style || 'secondary'}" target="_blank" rel="noopener">${esc(l.label)}</a>`;
         });
         html += `</div></section>`;
     }
@@ -736,6 +705,13 @@ const PROJECT_CONFIG = {
     btn.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
+
+    // --- Initialize Mermaid ---
+    if (window.mermaid) {
+        window.mermaid.run({
+            querySelector: '.mermaid'
+        });
+    }
 
     // --- Utility ---
     function esc(str) {

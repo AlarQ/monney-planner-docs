@@ -140,10 +140,12 @@
             border-radius: 8px;
             border: 1px solid var(--primary);
             overflow-x: auto;
-            font-family: 'Fira Code', 'Courier New', monospace;
-            font-size: 0.85rem;
-            line-height: 1.5;
-            color: var(--text);
+            display: flex;
+            justify-content: center;
+        }
+
+        .arch-diagram .mermaid {
+            max-width: 100%;
         }
 
         /* --- Tech Stack --- */
@@ -313,46 +315,6 @@
             transition: width 1s ease;
         }
 
-        /* --- Links --- */
-        .links-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        .cta-btn {
-            display: inline-block;
-            padding: 0.65rem 1.5rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 0.92rem;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .cta-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.25);
-        }
-
-        .cta-btn.primary {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        .cta-btn.secondary {
-            background: var(--primary);
-            color: var(--text);
-            border: 1px solid var(--primary);
-        }
-
-        .cta-btn.secondary:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
         /* --- Footer --- */
         .showcase-footer {
             text-align: center;
@@ -438,6 +400,27 @@
             }
         }
     </style>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#0f3460',
+                primaryTextColor: '#eaeaea',
+                primaryBorderColor: '#e94560',
+                lineColor: '#e94560',
+                secondaryColor: '#16213e',
+                tertiaryColor: '#1a1a2e',
+                background: '#0a0a1a',
+                mainBkg: '#16213e',
+                secondBkg: '#0f3460',
+                textColor: '#eaeaea',
+                fontSize: '14px'
+            }
+        });
+        window.mermaid = mermaid;
+    </script>
 </head>
 <body>
 
@@ -462,24 +445,25 @@ const PROJECT_CONFIG = {
     architecture: {
         description: "A brief text description of the architecture.",
         diagram: `
-┌─── Client Layer ───┐
-│   Browser / App    │
-└────────┬───────────┘
-         │
-┌─── API Gateway ────┐
-│   Routes & Auth    │
-└────────┬───────────┘
-         │
-┌─── Services ───────┐
-│ ├── Service A      │
-│ ├── Service B      │
-│ └── Service C      │
-└────────┬───────────┘
-         │
-┌─── Data Layer ─────┐
-│ ├── Database       │
-│ └── Message Queue  │
-└────────────────────┘
+graph TD
+    Client[Client Layer<br/>Browser / App]
+    Gateway[API Gateway<br/>Routes & Auth]
+    ServiceA[Service A]
+    ServiceB[Service B]
+    ServiceC[Service C]
+    DB[(Database)]
+    MQ[(Message Queue)]
+
+    Client --> Gateway
+    Gateway --> ServiceA
+    Gateway --> ServiceB
+    Gateway --> ServiceC
+    ServiceA --> DB
+    ServiceB --> DB
+    ServiceC --> DB
+    ServiceA -.-> MQ
+    ServiceB -.-> MQ
+    ServiceC -.-> MQ
         `
     },
 
@@ -522,14 +506,6 @@ const PROJECT_CONFIG = {
         { label: "Test Coverage", value: 90, type: "percentage" },
         { label: "Microservices", value: 4, type: "count" },
         { label: "Production Readiness", value: 60, type: "percentage" }
-    ],
-
-    // Links - array of { label, url, style }
-    // style: "primary" or "secondary"
-    links: [
-        { label: "GitHub", url: "https://github.com/your/repo", style: "primary" },
-        { label: "Live Demo", url: "https://demo.example.com", style: "secondary" },
-        { label: "Documentation", url: "https://docs.example.com", style: "secondary" }
     ],
 
     // Footer
@@ -577,7 +553,7 @@ const PROJECT_CONFIG = {
         sections.push({ id, label: 'Architecture' });
         html += `<section class="section" id="${id}"><h2 class="section-title">Architecture</h2>`;
         if (cfg.architecture.description) html += `<p class="arch-text">${esc(cfg.architecture.description)}</p>`;
-        if (cfg.architecture.diagram) html += `<pre class="arch-diagram">${esc(cfg.architecture.diagram.trim())}</pre>`;
+        if (cfg.architecture.diagram) html += `<div class="arch-diagram"><div class="mermaid">${cfg.architecture.diagram.trim()}</div></div>`;
         html += `</section>`;
     }
 
@@ -635,17 +611,6 @@ const PROJECT_CONFIG = {
                 html += `<div class="value">${m.value}</div>`;
             }
             html += `</div>`;
-        });
-        html += `</div></section>`;
-    }
-
-    // --- Links ---
-    if (cfg.links && cfg.links.length) {
-        const id = sectionId('Links');
-        sections.push({ id, label: 'Links' });
-        html += `<section class="section" id="${id}"><h2 class="section-title">Links</h2><div class="links-row">`;
-        cfg.links.forEach(l => {
-            html += `<a href="${esc(l.url)}" class="cta-btn ${l.style || 'secondary'}" target="_blank" rel="noopener">${esc(l.label)}</a>`;
         });
         html += `</div></section>`;
     }
@@ -715,6 +680,13 @@ const PROJECT_CONFIG = {
     btn.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
+
+    // --- Initialize Mermaid ---
+    if (window.mermaid) {
+        window.mermaid.run({
+            querySelector: '.mermaid'
+        });
+    }
 
     // --- Utility ---
     function esc(str) {
