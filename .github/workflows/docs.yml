@@ -86,6 +86,10 @@ jobs:
 
           # Copy all HTML pages (index, prds, showcases, etc.)
           cp monney-planner-docs/*.html _site/
+
+          # Copy screenshot images for showcase
+          cp monney-planner-docs/*.png _site/ 2>/dev/null || true
+
           cp -r monney-planner-docs/system-overview _site/
 
       - name: Upload artifact
