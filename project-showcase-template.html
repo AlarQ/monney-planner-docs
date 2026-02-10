@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Project Showcase</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --card-bg: #16213e;
+            --primary: #0f3460;
+            --accent: #e94560;
+            --text: #eaeaea;
+            --text-muted: #a0a0a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-color);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        /* --- Mini Nav --- */
+        .mini-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(26, 26, 46, 0.92);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--primary);
+            padding: 0.6rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .mini-nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.82rem;
+            padding: 0.3rem 0;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .mini-nav a:hover,
+        .mini-nav a.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* --- Hero --- */
+        .hero {
+            text-align: center;
+            padding: 5rem 1rem 3rem;
+        }
+
+        .hero h1 {
+            font-size: 3.2rem;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, var(--accent), #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .tagline {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            font-size: 0.78rem;
+            padding: 0.3rem 0.8rem;
+            background: var(--primary);
+            border: 1px solid var(--accent);
+            border-radius: 20px;
+            color: var(--accent);
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        /* --- Sections --- */
+        .section {
+            margin-top: 4rem;
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            margin-bottom: 1.25rem;
+            color: var(--accent);
+            border-bottom: 1px solid var(--primary);
+            padding-bottom: 0.4rem;
+        }
+
+        /* --- About --- */
+        .about p {
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1rem;
+            font-size: 1.05rem;
+        }
+
+        /* --- Architecture --- */
+        .arch-text {
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1.25rem;
+        }
+
+        .arch-diagram {
+            background: #0a0a1a;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--primary);
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: var(--text);
+        }
+
+        /* --- Tech Stack --- */
+        .tech-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .tech-group-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+            margin-bottom: 0.6rem;
+        }
+
+        .tech-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tech-pill {
+            display: inline-block;
+            padding: 0.35rem 0.85rem;
+            background: var(--primary);
+            border: 1px solid var(--primary);
+            border-radius: 20px;
+            font-size: 0.82rem;
+            color: var(--text);
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .tech-pill:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* --- Features --- */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.15);
+        }
+
+        .feature-card .icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.05rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* --- Challenges --- */
+        .challenges-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .challenge-card {
+            background: var(--card-bg);
+            border: 1px solid var(--primary);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 12px 12px 0;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .challenge-card h3 {
+            font-size: 1rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .challenge-label {
+            display: inline-block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 0.35rem;
+            font-weight: 600;
+        }
+
+        .challenge-label.problem {
+            background: rgba(233, 69, 96, 0.15);
+            color: var(--accent);
+        }
+
+        .challenge-label.solution {
+            background: rgba(46, 204, 113, 0.15);
+            color: #2ecc71;
+        }
+
+        .challenge-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+        }
+
+        .challenge-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* --- Metrics --- */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .metric-card .label {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar-track {
+            width: 100%;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--accent), #ff6b6b);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        /* --- Links --- */
+        .links-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            padding: 0.65rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.25);
+        }
+
+        .cta-btn.primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .cta-btn.secondary {
+            background: var(--primary);
+            color: var(--text);
+            border: 1px solid var(--primary);
+        }
+
+        .cta-btn.secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* --- Footer --- */
+        .showcase-footer {
+            text-align: center;
+            margin-top: 5rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--primary);
+        }
+
+        .showcase-footer a {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .showcase-footer a:hover {
+            opacity: 0.8;
+        }
+
+        /* --- Back to top --- */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 200;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .back-to-top:hover {
+            background: #ff6b6b;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 3.5rem 0.5rem 2rem;
+            }
+
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero .tagline {
+                font-size: 1rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .mini-nav {
+                padding: 0.5rem 1rem;
+                gap: 1rem;
+            }
+
+            .container {
+                padding: 0 1rem 3rem;
+            }
+
+            .section {
+                margin-top: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<script>
+// ============================================================
+// PROJECT CONFIG - Edit this object to customize the showcase
+// ============================================================
+const PROJECT_CONFIG = {
+    // Page title (used in <title> and hero)
+    title: "My Project",
+    tagline: "A brief description of what this project does",
+    status: "In Development",
+
+    // About section - array of paragraph strings
+    about: [
+        "First paragraph describing the project purpose and motivation.",
+        "Second paragraph with more details about the approach and goals.",
+        "Third paragraph covering the current state and future direction."
+    ],
+
+    // Architecture section
+    architecture: {
+        description: "A brief text description of the architecture.",
+        diagram: `
+┌─── Client Layer ───┐
+│   Browser / App    │
+└────────┬───────────┘
+         │
+┌─── API Gateway ────┐
+│   Routes & Auth    │
+└────────┬───────────┘
+         │
+┌─── Services ───────┐
+│ ├── Service A      │
+│ ├── Service B      │
+│ └── Service C      │
+└────────┬───────────┘
+         │
+┌─── Data Layer ─────┐
+│ ├── Database       │
+│ └── Message Queue  │
+└────────────────────┘
+        `
+    },
+
+    // Tech stack - grouped by category
+    techStack: [
+        { category: "Frontend", items: ["React", "TypeScript", "CSS Modules"] },
+        { category: "Backend", items: ["Node.js", "Express", "GraphQL"] },
+        { category: "Database", items: ["PostgreSQL", "Redis"] },
+        { category: "Infrastructure", items: ["Docker", "Kubernetes", "GitHub Actions"] }
+    ],
+
+    // Key features - array of { icon, title, description }
+    features: [
+        { icon: "⚡", title: "Fast Performance", description: "Optimized for speed with lazy loading and caching strategies." },
+        { icon: "🔒", title: "Secure by Default", description: "Built-in authentication, authorization, and data encryption." },
+        { icon: "📊", title: "Analytics Dashboard", description: "Real-time metrics and visualization of key business data." },
+        { icon: "🔄", title: "Real-time Sync", description: "Event-driven architecture for instant data propagation." },
+        { icon: "📱", title: "Responsive Design", description: "Works seamlessly across desktop, tablet, and mobile devices." },
+        { icon: "🧪", title: "Comprehensive Testing", description: "Unit, integration, and end-to-end test coverage." }
+    ],
+
+    // Technical challenges - array of { title, problem, solution }
+    challenges: [
+        {
+            title: "Challenge One",
+            problem: "Description of the technical problem encountered.",
+            solution: "How the problem was solved, including the approach and tradeoffs."
+        },
+        {
+            title: "Challenge Two",
+            problem: "Another technical hurdle that needed creative solutions.",
+            solution: "The resolution strategy and its benefits."
+        }
+    ],
+
+    // Metrics - array of { label, value, type }
+    // type: "percentage" shows progress bar, "count" shows large number
+    metrics: [
+        { label: "Feature Complete", value: 85, type: "percentage" },
+        { label: "Test Coverage", value: 90, type: "percentage" },
+        { label: "Microservices", value: 4, type: "count" },
+        { label: "Production Readiness", value: 60, type: "percentage" }
+    ],
+
+    // Links - array of { label, url, style }
+    // style: "primary" or "secondary"
+    links: [
+        { label: "GitHub", url: "https://github.com/your/repo", style: "primary" },
+        { label: "Live Demo", url: "https://demo.example.com", style: "secondary" },
+        { label: "Documentation", url: "https://docs.example.com", style: "secondary" }
+    ],
+
+    // Footer
+    footer: {
+        text: "Back to Portfolio",
+        url: "https://your-portfolio.com"
+    }
+};
+
+// ============================================================
+// RENDER ENGINE - Do not edit below unless customizing layout
+// ============================================================
+(function render() {
+    const cfg = PROJECT_CONFIG;
+
+    document.getElementById('page-title').textContent = cfg.title + ' - Showcase';
+
+    // Collect section IDs for mini-nav
+    const sections = [];
+
+    function sectionId(name) { return name.toLowerCase().replace(/\s+/g, '-'); }
+
+    // Build HTML
+    let html = '';
+
+    // --- Hero ---
+    html += `<section class="hero" id="top">`;
+    html += `<h1>${esc(cfg.title)}</h1>`;
+    if (cfg.tagline) html += `<p class="tagline">${esc(cfg.tagline)}</p>`;
+    if (cfg.status) html += `<span class="status-badge">${esc(cfg.status)}</span>`;
+    html += `</section>`;
+
+    // --- About ---
+    if (cfg.about) {
+        const id = sectionId('About');
+        sections.push({ id, label: 'About' });
+        html += `<section class="section about" id="${id}"><h2 class="section-title">About</h2>`;
+        cfg.about.forEach(p => { html += `<p>${esc(p)}</p>`; });
+        html += `</section>`;
+    }
+
+    // --- Architecture ---
+    if (cfg.architecture) {
+        const id = sectionId('Architecture');
+        sections.push({ id, label: 'Architecture' });
+        html += `<section class="section" id="${id}"><h2 class="section-title">Architecture</h2>`;
+        if (cfg.architecture.description) html += `<p class="arch-text">${esc(cfg.architecture.description)}</p>`;
+        if (cfg.architecture.diagram) html += `<pre class="arch-diagram">${esc(cfg.architecture.diagram.trim())}</pre>`;
+        html += `</section>`;
+    }
+
+    // --- Tech Stack ---
+    if (cfg.techStack && cfg.techStack.length) {
+        const id = sectionId('Tech Stack');
+        sections.push({ id, label: 'Tech Stack' });
+        html += `<section class="section" id="${id}"><h2 class="section-title">Tech Stack</h2>`;
+        cfg.techStack.forEach(group => {
+            html += `<div class="tech-group"><div class="tech-group-label">${esc(group.category)}</div><div class="tech-pills">`;
+            group.items.forEach(item => { html += `<span class="tech-pill">${esc(item)}</span>`; });
+            html += `</div></div>`;
+        });
+        html += `</section>`;
+    }
+
+    // --- Features ---
+    if (cfg.features && cfg.features.length) {
+        const id = sectionId('Features');
+        sections.push({ id, label: 'Features' });
+        html += `<section class="section" id="${id}"><h2 class="section-title">Key Features</h2><div class="features-grid">`;
+        cfg.features.forEach(f => {
+            html += `<div class="feature-card">`;
+            if (f.icon) html += `<div class="icon">${f.icon}</div>`;
+            html += `<h3>${esc(f.title)}</h3><p>${esc(f.description)}</p></div>`;
+        });
+        html += `</div></section>`;
+    }
+
+    // --- Challenges ---
+    if (cfg.challenges && cfg.challenges.length) {
+        const id = sectionId('Challenges');
+        sections.push({ id, label: 'Challenges' });
+        html += `<section class="section" id="${id}"><h2 class="section-title">Technical Challenges</h2><div class="challenges-list">`;
+        cfg.challenges.forEach(c => {
+            html += `<div class="challenge-card"><h3>${esc(c.title)}</h3>`;
+            html += `<span class="challenge-label problem">Problem</span><p>${esc(c.problem)}</p>`;
+            html += `<span class="challenge-label solution">Solution</span><p>${esc(c.solution)}</p>`;
+            html += `</div>`;
+        });
+        html += `</div></section>`;
+    }
+
+    // --- Metrics ---
+    if (cfg.metrics && cfg.metrics.length) {
+        const id = sectionId('Metrics');
+        sections.push({ id, label: 'Metrics' });
+        html += `<section class="section" id="${id}"><h2 class="section-title">Metrics</h2><div class="metrics-grid">`;
+        cfg.metrics.forEach(m => {
+            html += `<div class="metric-card"><div class="label">${esc(m.label)}</div>`;
+            if (m.type === 'percentage') {
+                html += `<div class="value">${m.value}%</div>`;
+                html += `<div class="progress-bar-track"><div class="progress-bar-fill" data-width="${m.value}"></div></div>`;
+            } else {
+                html += `<div class="value">${m.value}</div>`;
+            }
+            html += `</div>`;
+        });
+        html += `</div></section>`;
+    }
+
+    // --- Links ---
+    if (cfg.links && cfg.links.length) {
+        const id = sectionId('Links');
+        sections.push({ id, label: 'Links' });
+        html += `<section class="section" id="${id}"><h2 class="section-title">Links</h2><div class="links-row">`;
+        cfg.links.forEach(l => {
+            html += `<a href="${esc(l.url)}" class="cta-btn ${l.style || 'secondary'}" target="_blank" rel="noopener">${esc(l.label)}</a>`;
+        });
+        html += `</div></section>`;
+    }
+
+    // --- Footer ---
+    if (cfg.footer) {
+        html += `<div class="showcase-footer"><a href="${esc(cfg.footer.url)}">&larr; ${esc(cfg.footer.text)}</a></div>`;
+    }
+
+    // --- Back to top button ---
+    html += `<button class="back-to-top" id="backToTop" aria-label="Back to top">&uarr;</button>`;
+
+    // --- Mini Nav ---
+    let navHtml = '';
+    sections.forEach(s => {
+        navHtml += `<a href="#${s.id}">${esc(s.label)}</a>`;
+    });
+
+    // Insert into DOM
+    document.body.insertAdjacentHTML('afterbegin', `<nav class="mini-nav" id="miniNav">${navHtml}</nav><div class="container">${html}</div>`);
+
+    // --- Interactive behaviors ---
+
+    // Smooth scroll for mini-nav
+    document.querySelectorAll('.mini-nav a').forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const target = document.querySelector(link.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    // Intersection Observer for fade-in
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                // Animate progress bars
+                entry.target.querySelectorAll('.progress-bar-fill').forEach(bar => {
+                    bar.style.width = bar.dataset.width + '%';
+                });
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+    // Active mini-nav tracking
+    const navLinks = document.querySelectorAll('.mini-nav a');
+    const sectionObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(l => l.classList.remove('active'));
+                const active = document.querySelector(`.mini-nav a[href="#${entry.target.id}"]`);
+                if (active) active.classList.add('active');
+            }
+        });
+    }, { threshold: 0.3, rootMargin: '-80px 0px -60% 0px' });
+
+    document.querySelectorAll('.section').forEach(s => sectionObserver.observe(s));
+
+    // Back to top button
+    const btn = document.getElementById('backToTop');
+    window.addEventListener('scroll', () => {
+        btn.classList.toggle('visible', window.scrollY > 400);
+    });
+    btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // --- Utility ---
+    function esc(str) {
+        if (typeof str !== 'string') return str;
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+})();
+</script>
+</body>
+</html>
