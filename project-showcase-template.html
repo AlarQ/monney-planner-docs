@@ -737,11 +737,21 @@ graph TD
     });
 
     // --- Initialize Mermaid ---
-    if (window.mermaid) {
-        window.mermaid.run({
-            querySelector: '.mermaid'
-        });
+    function initMermaid() {
+        if (window.mermaid) {
+            window.mermaid.run({
+                querySelector: '.mermaid'
+            }).catch(err => {
+                console.error('Mermaid rendering error:', err);
+            });
+        } else {
+            // Retry if mermaid not loaded yet
+            setTimeout(initMermaid, 100);
+        }
     }
+
+    // Wait a bit for DOM and mermaid to be ready
+    setTimeout(initMermaid, 100);
 
     // --- Utility ---
     function esc(str) {

@@ -382,6 +382,113 @@
             opacity: 0.8;
         }
 
+        /* --- Screenshot Slider --- */
+        .screenshot-slider {
+            margin-top: 3rem;
+        }
+
+        .slider-container {
+            position: relative;
+            max-width: 1000px;
+            margin: 2rem auto 1rem;
+        }
+
+        .slider-wrapper {
+            overflow: hidden;
+            border-radius: 12px;
+            border: 1px solid var(--primary);
+            background: var(--card-bg);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .slider-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .slider-slide {
+            min-width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .slider-slide img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+            max-height: 600px;
+        }
+
+        .slider-caption {
+            padding: 1rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(14, 165, 233, 0.9);
+            color: white;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s, transform 0.3s;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider-btn:hover {
+            background: var(--primary-color);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .slider-btn-prev {
+            left: -24px;
+        }
+
+        .slider-btn-next {
+            right: -24px;
+        }
+
+        .slider-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .slider-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--primary-color);
+            background: transparent;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+            padding: 0;
+        }
+
+        .slider-indicator.active {
+            background: var(--primary-color);
+            transform: scale(1.2);
+        }
+
+        .slider-indicator:hover {
+            background: rgba(14, 165, 233, 0.5);
+        }
+
         /* --- Back to top --- */
         .back-to-top {
             position: fixed;
@@ -453,6 +560,34 @@
             .section {
                 margin-top: 3rem;
             }
+
+            /* Slider responsive */
+            .slider-container {
+                margin: 1.5rem auto;
+            }
+
+            .slider-slide img {
+                max-height: 400px;
+            }
+
+            .slider-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 1.2rem;
+            }
+
+            .slider-btn-prev {
+                left: -12px;
+            }
+
+            .slider-btn-next {
+                right: -12px;
+            }
+
+            .slider-caption {
+                font-size: 0.8rem;
+                padding: 0.75rem;
+            }
         }
     </style>
     <script type="module">
@@ -494,18 +629,30 @@ const PROJECT_CONFIG = {
         "The frontend is a React 18 TypeScript application with Material-UI, featuring AI-powered transaction categorization via OpenAI, CSV bank statement import, and responsive data visualizations with Recharts."
     ],
 
+    screenshots: [
+        { src: "landing-page.png", alt: "Money Planner landing page with hero section", caption: "Modern landing page with clear value proposition" },
+        { src: "dashboard-with-transaction.png", alt: "Transaction dashboard with filters and summary", caption: "Comprehensive transaction tracking with real-time summaries" },
+        { src: "add-transaction-form.png", alt: "Add transaction form with amount slider", caption: "Intuitive transaction entry with smart amount selection" },
+        { src: "transactions-by-category.png", alt: "Category distribution with pie chart", caption: "Visual spending analysis by category" },
+        { src: "categories-list.png", alt: "Transaction categories management", caption: "Flexible category system for income and expenses" },
+        { src: "setup-categories-dialog.png", alt: "Default categories selection", caption: "Quick setup with 18 pre-configured categories" },
+        { src: "budgets-empty.png", alt: "Budget overview page", caption: "Multi-period budget tracking and management" },
+        { src: "signin-page.png", alt: "Sign in page with modern design", caption: "Secure authentication with session management" },
+        { src: "signup-page.png", alt: "User registration form", caption: "Simple onboarding with validation" }
+    ],
+
     architecture: {
         description: "Five independently deployable Rust microservices behind an API gateway, communicating via Kafka events and secured with JWT. Deployed on Kubernetes with Helm charts, monitored with Prometheus and Grafana.",
         diagram: `
 graph TB
-    Browser[Browser React 18<br/>localhost:3000 / moneyplanner.local]
-    BFF[BFF - API Gateway Rust/Axum<br/>Session validation, routing, CORS<br/>Port 8082]
-    UserService[User Service<br/>Port 8080<br/>Argon2 Sessions]
-    TransactionService[Transaction Service<br/>Port 8081<br/>OpenAI API, CSV Import]
-    BudgetService[Budget Service<br/>Port 8083<br/>Kafka Consumer]
-    UserDB[(PostgreSQL<br/>:5432)]
-    TransactionDB[(PostgreSQL<br/>:5433)]
-    BudgetDB[(PostgreSQL<br/>:5434)]
+    Browser[Browser<br/>React 18 + TypeScript]
+    BFF[API Gateway<br/>Rust/Axum<br/>Session validation, routing, CORS]
+    UserService[User Service<br/>Rust/Axum<br/>Argon2 Sessions]
+    TransactionService[Transaction Service<br/>Rust/Axum<br/>OpenAI API, CSV Import]
+    BudgetService[Budget Service<br/>Rust/Axum<br/>Kafka Consumer]
+    UserDB[(PostgreSQL<br/>User DB)]
+    TransactionDB[(PostgreSQL<br/>Transaction DB)]
+    BudgetDB[(PostgreSQL<br/>Budget DB)]
     Kafka[Kafka Events<br/>int.transaction-update.event]
 
     Browser -->|HTTP/JSON| BFF
@@ -618,6 +765,31 @@ graph TB
     if (cfg.tagline) html += `<p class="tagline">${esc(cfg.tagline)}</p>`;
     if (cfg.status) html += `<span class="status-badge">${esc(cfg.status)}</span>`;
     html += `</section>`;
+
+    // --- Screenshot Slider ---
+    if (cfg.screenshots && cfg.screenshots.length) {
+        html += `<section class="section screenshot-slider" id="screenshots">`;
+        html += `<h2 class="section-title">Application Screenshots</h2>`;
+        html += `<div class="slider-container">`;
+        html += `<button class="slider-btn slider-btn-prev" aria-label="Previous screenshot">&larr;</button>`;
+        html += `<div class="slider-wrapper">`;
+        html += `<div class="slider-track">`;
+        cfg.screenshots.forEach((screenshot, idx) => {
+            html += `<div class="slider-slide ${idx === 0 ? 'active' : ''}">`;
+            html += `<img src="${esc(screenshot.src)}" alt="${esc(screenshot.alt)}" loading="lazy">`;
+            if (screenshot.caption) html += `<p class="slider-caption">${esc(screenshot.caption)}</p>`;
+            html += `</div>`;
+        });
+        html += `</div></div>`;
+        html += `<button class="slider-btn slider-btn-next" aria-label="Next screenshot">&rarr;</button>`;
+        html += `</div>`;
+        html += `<div class="slider-indicators">`;
+        cfg.screenshots.forEach((_, idx) => {
+            html += `<button class="slider-indicator ${idx === 0 ? 'active' : ''}" data-index="${idx}" aria-label="Go to screenshot ${idx + 1}"></button>`;
+        });
+        html += `</div>`;
+        html += `</section>`;
+    }
 
     // --- About ---
     if (cfg.about) {
@@ -762,9 +934,76 @@ graph TB
     });
 
     // --- Initialize Mermaid ---
-    if (window.mermaid) {
-        window.mermaid.run({
-            querySelector: '.mermaid'
+    function initMermaid() {
+        if (window.mermaid) {
+            window.mermaid.run({
+                querySelector: '.mermaid'
+            }).catch(err => {
+                console.error('Mermaid rendering error:', err);
+            });
+        } else {
+            // Retry if mermaid not loaded yet
+            setTimeout(initMermaid, 100);
+        }
+    }
+
+    // Wait a bit for DOM and mermaid to be ready
+    setTimeout(initMermaid, 100);
+
+    // --- Screenshot Slider ---
+    const sliderTrack = document.querySelector('.slider-track');
+    const slides = document.querySelectorAll('.slider-slide');
+    const prevBtn = document.querySelector('.slider-btn-prev');
+    const nextBtn = document.querySelector('.slider-btn-next');
+    const indicators = document.querySelectorAll('.slider-indicator');
+
+    if (sliderTrack && slides.length > 0) {
+        let currentIndex = 0;
+
+        function updateSlider(index) {
+            currentIndex = index;
+            sliderTrack.style.transform = `translateX(-${index * 100}%)`;
+
+            indicators.forEach((indicator, i) => {
+                indicator.classList.toggle('active', i === index);
+            });
+        }
+
+        function nextSlide() {
+            const nextIndex = (currentIndex + 1) % slides.length;
+            updateSlider(nextIndex);
+        }
+
+        function prevSlide() {
+            const prevIndex = (currentIndex - 1 + slides.length) % slides.length;
+            updateSlider(prevIndex);
+        }
+
+        if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+        if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+
+        indicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', () => updateSlider(index));
+        });
+
+        // Auto-advance slider every 5 seconds
+        let autoAdvance = setInterval(nextSlide, 5000);
+
+        // Pause auto-advance on hover
+        const sliderContainer = document.querySelector('.slider-container');
+        if (sliderContainer) {
+            sliderContainer.addEventListener('mouseenter', () => {
+                clearInterval(autoAdvance);
+            });
+            sliderContainer.addEventListener('mouseleave', () => {
+                autoAdvance = setInterval(nextSlide, 5000);
+            });
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') prevSlide();
+            if (e.key === 'ArrowRight') nextSlide();
         });
     }
 

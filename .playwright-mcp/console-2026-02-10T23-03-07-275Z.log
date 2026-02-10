@@ -1,0 +1,67 @@
+[     420ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://localhost:3002/static/js/bundle.js:116902
+[     420ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://localhost:3002/static/js/bundle.js:116902
+[     500ms] [WARNING] Error while trying to use the following icon from the Manifest: http://localhost:3002/logo192.png (Download error or resource isn't a valid image) @ http://localhost:3002/transactions:0
+[   21527ms] [ERROR] Warning: A props object containing a "key" prop is being spread into JSX:
+  let props = %s;
+  <%s {...props} />
+React keys must be passed directly to JSX without using spread:
+  let props = %s;
+  <%s key={someKey} {...props} />%s {key: someKey, component: ..., tabIndex: ..., role: ..., id: ..., onMouseMove: ..., onClick: ..., onTouchStart: ..., data-option-index: ..., aria-disabled: ..., aria-selected: ..., className: ..., children: ...} ForwardRef(Box) {component: ..., tabIndex: ..., role: ..., id: ..., onMouseMove: ..., onClick: ..., onTouchStart: ..., data-option-index: ..., aria-disabled: ..., aria-selected: ..., className: ..., children: ...} ForwardRef(Box) 
+    at Autocomplete (http://localhost:3002/static/js/bundle.js:4958:88)
+    at div
+    at http://localhost:3002/static/js/bundle.js:909:66
+    at Box (http://localhost:3002/static/js/bundle.js:42542:72)
+    at TransactionFormFields (http://localhost:3002/static/js/bundle.js:174474:3)
+    at form
+    at http://localhost:3002/static/js/bundle.js:74072:22
+    at Formik (http://localhost:3002/static/js/bundle.js:73777:19)
+    at div
+    at http://localhost:3002/static/js/bundle.js:909:66
+    at Box (http://localhost:3002/static/js/bundle.js:42542:72)
+    at div
+    at http://localhost:3002/static/js/bundle.js:909:66
+    at Grid (http://localhost:3002/static/js/bundle.js:14250:92)
+    at div
+    at http://localhost:3002/static/js/bundle.js:909:66
+    at Grid (http://localhost:3002/static/js/bundle.js:14250:92)
+    at div
+    at http://localhost:3002/static/js/bundle.js:909:66
+    at Paper (http://localhost:3002/static/js/bundle.js:22408:88)
+    at div
+    at http://localhost:3002/static/js/bundle.js:909:66
+    at Container (http://localhost:3002/static/js/bundle.js:41261:19)
+    at div
+    at http://localhost:3002/static/js/bundle.js:909:66
+    at Box (http://localhost:3002/static/js/bundle.js:42542:72)
+    at FormContainer (http://localhost:3002/static/js/bundle.js:169427:3)
+    at AddTransaction (http://localhost:3002/static/js/bundle.js:155831:3)
+    at div
+    at http://localhost:3002/static/js/bundle.js:909:66
+    at Box (http://localhost:3002/static/js/bundle.js:42542:72)
+    at Transactions (http://localhost:3002/static/js/bundle.js:164039:82)
+    at ProtectedRoute (http://localhost:3002/static/js/bundle.js:161392:3)
+    at RenderedRoute (http://localhost:3002/static/js/bundle.js:116486:5)
+    at Routes (http://localhost:3002/static/js/bundle.js:117220:5)
+    at div
+    at http://localhost:3002/static/js/bundle.js:909:66
+    at Box (http://localhost:3002/static/js/bundle.js:42542:72)
+    at div
+    at http://localhost:3002/static/js/bundle.js:909:66
+    at Container (http://localhost:3002/static/js/bundle.js:41261:19)
+    at Router (http://localhost:3002/static/js/bundle.js:117154:15)
+    at BrowserRouter (http://localhost:3002/static/js/bundle.js:115055:5)
+    at div
+    at http://localhost:3002/static/js/bundle.js:909:66
+    at Box (http://localhost:3002/static/js/bundle.js:42542:72)
+    at JobsProvider (http://localhost:3002/static/js/bundle.js:179320:3)
+    at TransactionFilterProvider (http://localhost:3002/static/js/bundle.js:179647:3)
+    at BudgetProvider (http://localhost:3002/static/js/bundle.js:179219:3)
+    at SnackbarProvider (http://localhost:3002/static/js/bundle.js:179524:3)
+    at DefaultPropsProvider (http://localhost:3002/static/js/bundle.js:41333:3)
+    at RtlProvider (http://localhost:3002/static/js/bundle.js:41478:7)
+    at ThemeProvider (http://localhost:3002/static/js/bundle.js:40201:5)
+    at ThemeProvider (http://localhost:3002/static/js/bundle.js:41769:5)
+    at ThemeProvider (http://localhost:3002/static/js/bundle.js:37454:14)
+    at ErrorBoundary (http://localhost:3002/static/js/bundle.js:158726:5)
+    at App (http://localhost:3002/static/js/bundle.js:153942:68)
+    at AuthProvider (http://localhost:3002/static/js/bundle.js:178958:3) @ http://localhost:3002/static/js/bundle.js:120295
