@@ -769,9 +769,9 @@ graph TB
     // --- Screenshot Slider ---
     if (cfg.screenshots && cfg.screenshots.length) {
         html += `<section class="section screenshot-slider" id="screenshots">`;
-        html += `<h2 class="section-title">Application Screenshots</h2>`;
+        html += `<h2 class="section-title">Product Overview</h2>`;
         html += `<div class="slider-container">`;
-        html += `<button class="slider-btn slider-btn-prev" aria-label="Previous screenshot">&larr;</button>`;
+        html += `<button class="slider-btn slider-btn-prev" aria-label="Previous view">&larr;</button>`;
         html += `<div class="slider-wrapper">`;
         html += `<div class="slider-track">`;
         cfg.screenshots.forEach((screenshot, idx) => {
@@ -781,11 +781,11 @@ graph TB
             html += `</div>`;
         });
         html += `</div></div>`;
-        html += `<button class="slider-btn slider-btn-next" aria-label="Next screenshot">&rarr;</button>`;
+        html += `<button class="slider-btn slider-btn-next" aria-label="Next view">&rarr;</button>`;
         html += `</div>`;
         html += `<div class="slider-indicators">`;
         cfg.screenshots.forEach((_, idx) => {
-            html += `<button class="slider-indicator ${idx === 0 ? 'active' : ''}" data-index="${idx}" aria-label="Go to screenshot ${idx + 1}"></button>`;
+            html += `<button class="slider-indicator ${idx === 0 ? 'active' : ''}" data-index="${idx}" aria-label="Go to view ${idx + 1}"></button>`;
         });
         html += `</div>`;
         html += `</section>`;
